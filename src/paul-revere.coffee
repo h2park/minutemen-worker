@@ -1,7 +1,7 @@
-_      = require 'lodash'
-moment = require 'moment'
-async  = require 'async'
-debug  = require('debug')('minute-man-worker:paul-revere')
+_          = require 'lodash'
+async      = require 'async'
+TimeParser = require './time-parser'
+debug      = require('debug')('minute-man-worker:paul-revere')
 
 class PaulRevere
   constructor: ({ database, @client, @queueName, @timestampRedisKey }) ->
@@ -12,62 +12,62 @@ class PaulRevere
     @collection = database.collection 'intervals'
 
   findAndDeployMilitia: (callback) =>
-    @_getTimestamp (error, timestamp) =>
+    @_getTimeParser (error, timeParser) =>
       return callback error if error?
-      debug 'got timestamp', { timestamp }
-      @_findMilitia { timestamp }, (error) =>
+      debug 'got timeParser', timeParser.toString()
+      @_findMilitia { timeParser }, (error) =>
         return callback error if error?
         callback null
 
-  _findMilitia: ({ timestamp }, callback) =>
+  _findMilitia: ({ timeParser }, callback) =>
     query =
-      'data.intervalTime':
-        $lt : 60000
-      processAt:
-        $gt: @_getPervDate(timestamp)
-        $lt: @_getNextDate(timestamp)
-    update =
-      $inc:
-        processAt: 60
-    debug 'findAndModifying', { query, update }
+      'data.intervalTime': { $exists: true }
+      processing: { $ne: true }
+      $or: [
+        {
+          processAt: {
+            $gt: timeParser.lastMinute()
+            $lte: timeParser.nextMinute()
+          }
+        }
+        { processAt: $exists: false }
+      ]
+    update = $set: { processing: true }
+    debug 'findAndModifying', query, update
+    debug 'lastMinute', timeParser.lastMinute()
+    debug 'nextMinute', timeParser.nextMinute()
     @collection.findAndModify { query, update, sort: -1 }, (error, record) =>
       return callback error if error?
       return callback null unless record?
       debug 'got record', { record }
-      @_createMilitia record, callback
+      @_processMilitia { record, timeParser }, callback
 
-  _createMilitia: (record, callback) =>
-    debug 'creating militia', { record }
-    intervalTime = _.get(record, 'data.intervalTime')
-    processAt = _.get(record, 'processAt')
-    seconds = @_getSecondsQueues {intervalTime, processAt}
-    async.eachSeries seconds, async.apply(@_pushSecond, record), callback
+  _processMilitia: ({ record, timeParser }, callback) =>
+    debug 'process militia', { record }
+    { processAt, data } = record
+    { intervalTime } = data
+    secondsList = timeParser.getSecondsList {intervalTime, processAt}
+    @_deployMilitia { secondsList, record }, (error) =>
+      return callback error if error?
+      query  = _id: record._id
+      update =
+        processing: false
+        processAt:  timeParser.getNextProcessAt({ processAt, intervalTime })
+      @collection.update query, { $set: update }, callback
+
+  _deployMilitia: ({ secondsList, record }, callback) =>
+    debug 'deploy militia', _.size(secondsList)
+    async.eachSeries secondsList, async.apply(@_pushSecond, record), callback
 
   _pushSecond: (record, queue, callback) =>
     debug 'lpushing', { queue, record }
-    @client.lpush queue, JSON.stringify(record), callback
+    @client.lpush "#{@queueName}:#{queue}", JSON.stringify(record), callback
+    return # redis fix
 
-  _getPervDate: (timestamp) =>
-    debug 'perv date', { timestamp }
-    return moment(timestamp).subtract(1, 'minute').unix()
-
-  _getNextDate: (timestamp) =>
-    return moment(timestamp).add(1, 'minute').unix()
-
-  _getSecondsQueues: ({ intervalTime, processAt }) =>
-    intervalSeconds = _.round(intervalTime / 1000)
-    times = _.round(60 / intervalSeconds)
-    debug 'times', times
-    return _.times times, (n) =>
-      offset = 60 / times
-      debug 'second queue', { n, offset, intervalTime, processAt }
-      second = moment(processAt * 1000).add((offset * n), 'seconds').unix()
-      return "#{@queueName}:#{second}"
-
-  _getTimestamp: (callback) =>
+  _getTimeParser: (callback) =>
     @client.get @timestampRedisKey, (error, timestamp) =>
       return callback error if error?
       return callback new Error('Missing timestamp in redis') unless timestamp?
-      callback null, _.parseInt(timestamp) * 1000
+      callback null, new TimeParser { timestamp }
 
 module.exports = PaulRevere

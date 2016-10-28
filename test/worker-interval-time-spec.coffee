@@ -9,10 +9,12 @@ uuid    = require 'uuid'
 describe 'Worker (Interval)', ->
   beforeEach (done) ->
     @timestampRedisKey = 'mm-timestamp'
+    @queueName = 'seconds'
     client = new Redis 'localhost', dropBufferSupport: true
     client.on 'ready', =>
       @client = new RedisNS 'test-worker', client
       @client.del @timestampRedisKey
+      @client.del @queueName
       done()
 
   beforeEach ->
@@ -20,7 +22,6 @@ describe 'Worker (Interval)', ->
     @database.intervals.drop()
 
   beforeEach ->
-    @queueName = 'seconds'
     @currentTime = moment()
     @sut = new Worker { @database, @client, @queueName, @timestampRedisKey }
 
@@ -53,7 +54,8 @@ describe 'Worker (Interval)', ->
               intervalTime: 10000
               fireOnce: false
               nodeId: 'the-node-id'
-          @database.intervals.insert record, done
+          @database.intervals.insert record, (error, @record) =>
+            done error
 
         beforeEach (done) ->
           @sut.do done
@@ -98,6 +100,13 @@ describe 'Worker (Interval)', ->
             done()
           return # redis fix
 
+        it 'should have the correct processAt time', (done) ->
+          @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+            return done error if error?
+            expect(updatedRecord.processAt).to.equal @currentTime.add(1, 'minute').unix()
+            expect(updatedRecord.processing).to.be.false
+            done()
+
       describe 'when an interval record with a crazy intervalTime', ->
         beforeEach (done) ->
           record =
@@ -110,7 +119,8 @@ describe 'Worker (Interval)', ->
               intervalTime: 1250
               fireOnce: false
               nodeId: 'the-node-id'
-          @database.intervals.insert record, done
+          @database.intervals.insert record, (error, @record) =>
+            done error
 
         beforeEach (done) ->
           @sut.do done
@@ -131,6 +141,13 @@ describe 'Worker (Interval)', ->
             done()
           return # redis fix
 
+        it 'should have the correct processAt time', (done) ->
+          @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+            return done error if error?
+            expect(updatedRecord.processAt).to.equal @currentTime.add(1, 'minute').unix()
+            expect(updatedRecord.processing).to.be.false
+            done()
+
       describe 'when an interval record with a over-a-minute intervalTime', ->
         beforeEach (done) ->
           record =
@@ -143,7 +160,8 @@ describe 'Worker (Interval)', ->
               intervalTime: 60 * 1000 * 2
               fireOnce: false
               nodeId: 'the-node-id'
-          @database.intervals.insert record, done
+          @database.intervals.insert record, (error, @record) =>
+            done error
 
         beforeEach (done) ->
           @sut.do done
@@ -155,3 +173,10 @@ describe 'Worker (Interval)', ->
             expect(result).to.exist
             done()
           return # redis fix
+
+        it 'should have the correct processAt time', (done) ->
+          @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+            return done error if error?
+            expect(updatedRecord.processAt).to.equal @currentTime.add(2, 'minute').unix()
+            expect(updatedRecord.processing).to.be.false
+            done()
