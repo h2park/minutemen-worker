@@ -3,9 +3,11 @@ async = require 'async'
 class Worker
   constructor: (options={})->
     { @client, @queueName, @queueTimeout } = options
+    { @database } = options
     throw new Error('Worker: requires client') unless @client?
     throw new Error('Worker: requires queueName') unless @queueName?
     throw new Error('Worker: requires queueTimeout') unless @queueTimeout?
+    throw new Error('Worker: requires database') unless @database?
     @shouldStop = false
     @isStopped = false
 

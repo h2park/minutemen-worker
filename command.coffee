@@ -2,6 +2,7 @@ _              = require 'lodash'
 chalk          = require 'chalk'
 dashdash       = require 'dashdash'
 Redis          = require 'ioredis'
+mongojs        = require 'mongojs'
 RedisNS        = require '@octoblu/redis-ns'
 Worker         = require './src/worker'
 SigtermHandler = require 'sigterm-handler'
@@ -35,6 +36,12 @@ OPTIONS = [
     help: 'BRPOP timeout (in seconds)'
   },
   {
+    names: ['mongodb-uri']
+    type: 'string'
+    env: 'MONGODB_URI'
+    help: 'MongoDB connection URI'
+  },
+  {
     names: ['help', 'h']
     type: 'bool'
     help: 'Print this help and exit.'
@@ -50,7 +57,13 @@ class Command
   constructor: ->
     process.on 'uncaughtException', @die
     @parser = dashdash.createParser({options: OPTIONS})
-    {@redis_uri, @redis_namespace, @queue_timeout, @queue_name} = @parseOptions()
+    options = @parseOptions()
+    @redisUri = options.redis_uri
+    @redisNamespace = options.redis_namespace
+    @queueTimeout = options.queue_timeout
+    @queueName = options.queue_name
+    @mongoDBUri = options.mongodb_uri
+    @validateOptions()
 
   printHelp: =>
     options = { includeEnv: true, includeDefaults:true }
@@ -67,30 +80,45 @@ class Command
       console.log packageJSON.version
       process.exit 0
 
-    unless options.redis_uri? && options.redis_namespace? && options.queue_name? && options.queue_timeout?
-      @printHelp()
-      console.error chalk.red 'Missing required parameter --redis-uri, -r, or env: REDIS_URI' unless options.redis_uri?
-      console.error chalk.red 'Missing required parameter --redis-namespace, -n, or env: REDIS_NAMESPACE' unless options.redis_namespace?
-      console.error chalk.red 'Missing required parameter --queue-timeout, -t, or env: QUEUE_TIMEOUT' unless options.queue_timeout?
-      console.error chalk.red 'Missing required parameter --queue-name, -u, or env: QUEUE_NAME' unless options.queue_name?
-      process.exit 1
-
     return options
 
+  validateOptions: =>
+    return if @redisUri? && @redisNamespace? && @queueName? && @queueTimeout? && @mongoDBUri?
+    @printHelp()
+    console.error chalk.red 'Missing required parameter --redis-uri, -r, or env: REDIS_URI' unless @redisUri?
+    console.error chalk.red 'Missing required parameter --redis-namespace, -n, or env: REDIS_NAMESPACE' unless @redisNamespace?
+    console.error chalk.red 'Missing required parameter --queue-name, -q, or env: QUEUE_NAME' unless @queueName?
+    console.error chalk.red 'Missing required parameter --queue-timeout, -t, or env: QUEUE_TIMEOUT' unless @queueTimeout?
+    console.error chalk.red 'Missing required parameter --mongodb-uri, or env: MONGODB_URI' unless @mongoDBUri?
+    process.exit 1
+
   run: =>
-    @getWorkerClient (error, client) =>
+    @getDatabaseClient (error, database) =>
       return @die error if error?
+      @getWorkerClient (error, client) =>
+        return @die error if error?
 
-      worker = new Worker { client, queueName: @queue_name, queueTimeout: @queue_timeout }
-      worker.run @die
+        worker = new Worker { client, database, @queueName, @queueTimeout }
+        worker.run @die
 
-      sigtermHandler = new SigtermHandler { events: ['SIGINT', 'SIGTERM']}
-      sigtermHandler.register worker.stop
+        sigtermHandler = new SigtermHandler { events: ['SIGINT', 'SIGTERM']}
+        sigtermHandler.register worker.stop
+
+  getDatabaseClient: (callback) =>
+    database = mongojs @mongoDBUri
+    database.runCommand {ping: 1}, (error) =>
+      return callback error if error?
+
+      setInterval =>
+        @database.runCommand {ping: 1}, @die
+      , (10 * 1000)
+
+      callback null, database
 
   getWorkerClient: (callback) =>
-    @getRedisClient @redis_uri, (error, client) =>
+    @getRedisClient @redisUri, (error, client) =>
       return callback error if error?
-      clientNS  = new RedisNS @redis_namespace, client
+      clientNS  = new RedisNS @redisNamespace, client
       callback null, clientNS
 
   getRedisClient: (redisUri, callback) =>

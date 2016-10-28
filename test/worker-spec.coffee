@@ -1,6 +1,7 @@
 Worker  = require '../src/worker'
 Redis   = require 'ioredis'
 RedisNS = require '@octoblu/redis-ns'
+mongojs = require 'mongojs'
 
 describe 'Worker', ->
   beforeEach (done) ->
@@ -12,7 +13,8 @@ describe 'Worker', ->
   beforeEach ->
     queueName = 'work'
     queueTimeout = 1
-    @sut = new Worker { @client, queueName, queueTimeout }
+    @database = mongojs 'minute-man-worker-test', ['intervals']
+    @sut = new Worker { @database, @client, queueName, queueTimeout }
 
   afterEach (done) ->
     @sut.stop done
