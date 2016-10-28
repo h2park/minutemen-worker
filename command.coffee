@@ -29,11 +29,11 @@ OPTIONS = [
     help: 'Name of Redis work queue'
   },
   {
-    names: ['queue-timeout', 't']
-    type: 'positiveInteger'
-    env: 'QUEUE_TIMEOUT'
-    default: 30
-    help: 'BRPOP timeout (in seconds)'
+    names: ['timestamp-redis-key', 't']
+    type: 'string'
+    env: 'TIMESTAMP_REDIS_KEY'
+    default: 'timestamp'
+    help: 'The redis key for the timestamp'
   },
   {
     names: ['mongodb-uri']
@@ -60,9 +60,9 @@ class Command
     options = @parseOptions()
     @redisUri = options.redis_uri
     @redisNamespace = options.redis_namespace
-    @queueTimeout = options.queue_timeout
     @queueName = options.queue_name
     @mongoDBUri = options.mongodb_uri
+    @timestampRedisKey = options.timestamp_redis_key
     @validateOptions()
 
   printHelp: =>
@@ -83,12 +83,12 @@ class Command
     return options
 
   validateOptions: =>
-    return if @redisUri? && @redisNamespace? && @queueName? && @queueTimeout? && @mongoDBUri?
+    return if @redisUri? && @redisNamespace? && @queueName? && @timestampRedisKey? && @mongoDBUri?
     @printHelp()
     console.error chalk.red 'Missing required parameter --redis-uri, -r, or env: REDIS_URI' unless @redisUri?
     console.error chalk.red 'Missing required parameter --redis-namespace, -n, or env: REDIS_NAMESPACE' unless @redisNamespace?
     console.error chalk.red 'Missing required parameter --queue-name, -q, or env: QUEUE_NAME' unless @queueName?
-    console.error chalk.red 'Missing required parameter --queue-timeout, -t, or env: QUEUE_TIMEOUT' unless @queueTimeout?
+    console.error chalk.red 'Missing required parameter --timestamp-redis-key, -t, or env: TIMESTAMP_REDIS_KEY' unless @timestampRedisKey?
     console.error chalk.red 'Missing required parameter --mongodb-uri, or env: MONGODB_URI' unless @mongoDBUri?
     process.exit 1
 
@@ -98,7 +98,7 @@ class Command
       @getWorkerClient (error, client) =>
         return @die error if error?
 
-        worker = new Worker { client, database, @queueName, @queueTimeout }
+        worker = new Worker { client, database, @queueName, @timestampRedisKey }
         worker.run @die
 
         sigtermHandler = new SigtermHandler { events: ['SIGINT', 'SIGTERM']}

@@ -1,15 +1,21 @@
-async = require 'async'
+async      = require 'async'
+PaulRevere = require './paul-revere'
 
 class Worker
   constructor: (options={})->
-    { @client, @queueName, @queueTimeout } = options
-    { @database } = options
-    throw new Error('Worker: requires client') unless @client?
-    throw new Error('Worker: requires queueName') unless @queueName?
-    throw new Error('Worker: requires queueTimeout') unless @queueTimeout?
-    throw new Error('Worker: requires database') unless @database?
+    { client, queueName, database, timestampRedisKey } = options
+    throw new Error('Worker: requires client') unless client?
+    throw new Error('Worker: requires queueName') unless queueName?
+    throw new Error('Worker: requires database') unless database?
+    throw new Error('Worker: requires timestampRedisKey') unless timestampRedisKey?
     @shouldStop = false
     @isStopped = false
+    @paulRevere = new PaulRevere {
+      database,
+      client,
+      queueName,
+      timestampRedisKey,
+    }
 
   doWithNextTick: (callback) =>
     # give some time for garbage collection
@@ -19,17 +25,7 @@ class Worker
           callback error
 
   do: (callback) =>
-    @client.brpop @queueName, @queueTimeout, (error, result) =>
-      return callback error if error?
-      return callback() unless result?
-
-      [ queue, data ] = result
-      try
-        data = JSON.parse data
-      catch error
-        return callback error
-
-      callback null, data
+    @paulRevere.findAndDeployMilitia(callback)
     return # avoid returning promise
 
   run: (callback) =>
