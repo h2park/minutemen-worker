@@ -97,15 +97,14 @@ describe.only 'TimeParser', ->
           _.times 30, (n) =>
             expect(@secondsList).to.include @sut.getCurrentTime().unix() + (n * 2)
 
-      describe 'when the cronString is every seconds', ->
+      describe 'when the cronString is every second', ->
         beforeEach ->
           @secondsList = @sut.getSecondsList { cronString: '* * * * * *' }
 
         it 'should have 60 seconds in the list', ->
-          baseTime = @sut.getCurrentTime().seconds(0)
+          baseTime = @sut.getCurrentTime()
           _.times 60, (n) =>
-            baseTime = baseTime.add(1, 'seconds')
-            expect(@secondsList).to.include baseTime.unix()
+            expect(@secondsList).to.include baseTime.unix() + n
 
         it 'should have a length of 60', ->
           expect(@secondsList.length).to.equal 60
@@ -115,10 +114,10 @@ describe.only 'TimeParser', ->
           @secondsList = @sut.getSecondsList { cronString: '*/10 * * * * *' }
 
         it 'should have 6 seconds in the list', ->
-          baseTime = @sut.getCurrentTime().seconds(0)
+          baseTime = @sut.getCurrentTime()
           _.times 6, (n) =>
-            expect(@secondsList).to.include baseTime.unix()
-            baseTime = baseTime.add(10, 'seconds') unless n
+            roundedTime = _.ceil baseTime.unix(), -1
+            expect(@secondsList).to.include roundedTime + (n * 10)
 
         it 'should have a length of 6', ->
           expect(@secondsList.length).to.equal 6
@@ -131,5 +130,5 @@ describe.only 'TimeParser', ->
           expect(@secondsList.length).to.equal 1
 
         it 'should have 1 seconds in the list', ->
-          baseTime = @sut.getCurrentTime().seconds(0)
-          expect(@secondsList).to.include baseTime.unix()
+          roundedTime = _.ceil @sut.getCurrentTime().seconds(0).unix(), -1
+          expect(@secondsList).to.include roundedTime

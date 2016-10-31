@@ -1,5 +1,6 @@
 _          = require 'lodash'
 cronParser = require 'cron-parser'
+later      = require 'later'
 moment     = require 'moment'
 debug      = require('debug')('minute-man-worker:time-parser')
 
@@ -28,16 +29,6 @@ class TimeParser
     return @_getNextProcessAtFromCronString { cronString, processAt } if cronString?
     throw new Error 'Invalid interval format'
 
-  getNextTimeFromCronParser: (parser) =>
-    nextDate = null
-    timeDiff = 0
-    while timeDiff <= @minTimeDiff
-      nextDate = parser.next()?.toDate()
-      if nextDate?
-        nextDate.setMilliseconds 0
-        timeDiff = nextDate - @getCurrentTime().valueOf()
-    return moment(nextDate.valueOf()).unix()
-
   _getNextProcessAtFromIntervalTime: ({ processAt, intervalTime }) =>
     throw new Error '_getNextProcessAtFromIntervalTime: requires processAt' unless processAt?
     intervalSeconds = @_getSecondsFromMs(intervalTime)
@@ -46,32 +37,42 @@ class TimeParser
     moment.unix(processAt).add(intervalSeconds, 'seconds').unix()
 
   _getSecondsListFromCronString: ({ cronString }) =>
-    # passing in currentDate only sets the timezone
-    parser = cronParser.parseExpression cronString, {currentDate: @getCurrentTime().toDate() }
-    nextTimestamp = @getNextTimeFromCronParser(parser)
-    secondsList = []
-    debug 'cronString nextTimestamp', nextTimestamp
-    while @_inRange nextTimestamp, 0, 1
-      secondsList.push nextTimestamp
-      nextTimestamp = @getNextTimeFromCronParser(parser)
-    return secondsList
+    # handle crazy seconds problem
+    try
+      parser = later.parse.cron(cronString, true)
+      schedules = later.schedule(parser)
+    catch
+      parser = later.parse.cron(cronString)
+      schedules = later.schedule(parser)
+    return _.filter @_getNextTimes(schedules), @_inRange
 
   _getSecondsListFromIntervalTime: ({ intervalTime, processAt }) =>
     throw new Error '_getSecondsListFromIntervalTime: requires processAt' unless processAt?
-    intervalSeconds = @_getSecondsFromMs(intervalTime)
-    times           = _.round(60 / intervalSeconds)
-    offset          = _.round(60 / times)
-    secondsList = _.times times, (n) =>
-      moment.unix(processAt).add((offset * n), 'seconds').unix()
-    return _.filter secondsList, (item) => @_inRange item
+    everySeconds = @_getSecondsFromMs(intervalTime)
+    debug 'everySeconds', everySeconds
+    parser = later.parse.recur()
+      .every(everySeconds)
+      .second()
+    schedules = later.schedule(parser)
+    return _.filter @_getNextTimes(schedules, processAt), @_inRange
 
-  _inRange: (timestamp, minOffset=0, maxOffset=0) =>
-    min = @getMinRangeTime() + minOffset
-    max = @getMaxRangeTime() + maxOffset
+  _inRange: (timestamp) =>
+    min = @getMinRangeTime()
+    max = @getMaxRangeTime()
     debug "#{timestamp} >= #{min} and #{timestamp} < #{max}"
     return timestamp >= min and timestamp < max
 
   _getSecondsFromMs: (ms) =>
-    _.round(ms / 1000)
+    return _.round(ms / 1000)
+
+  _getNextTimes: (schedules, minTime) =>
+    debug 'minTime', minTime if minTime?
+    min = moment.unix(minTime ? @getMinRangeTime())
+    max = moment.unix(@getMaxRangeTime()).add(1, 'second')
+    timesList = _.compact(schedules.next(60, min.toDate(), max.toDate()))
+    secondsList = _.map timesList, (time) =>
+      return moment(time).unix()
+    debug 'secondsList', secondsList
+    return secondsList
 
 module.exports = TimeParser
