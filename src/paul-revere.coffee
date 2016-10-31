@@ -8,7 +8,6 @@ class PaulRevere
     throw new Error('PaulRevere: requires database') unless database?
     throw new Error('PaulRevere: requires client') unless @client?
     throw new Error('PaulRevere: requires queueName') unless @queueName?
-    throw new Error('PaulRevere: requires timestampRedisKey') unless @timestampRedisKey?
     @collection = database.collection 'intervals'
 
   findAndDeployMilitia: (callback) =>
@@ -65,8 +64,9 @@ class PaulRevere
     return # redis fix
 
   _getTimeParser: (callback) =>
-    @client.get @timestampRedisKey, (error, timestamp) =>
+    @client.time (error, result) =>
       return callback error if error?
+      [ timestamp ] = result ? []
       return callback new Error('Missing timestamp in redis') unless timestamp?
       callback null, new TimeParser { timestamp }
 

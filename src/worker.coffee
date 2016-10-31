@@ -7,14 +7,12 @@ class Worker
     throw new Error('Worker: requires client') unless client?
     throw new Error('Worker: requires queueName') unless queueName?
     throw new Error('Worker: requires database') unless database?
-    throw new Error('Worker: requires timestampRedisKey') unless timestampRedisKey?
     @shouldStop = false
     @isStopped = false
     @paulRevere = new PaulRevere {
       database,
       client,
       queueName,
-      timestampRedisKey,
     }
 
   doWithNextTick: (callback) =>
