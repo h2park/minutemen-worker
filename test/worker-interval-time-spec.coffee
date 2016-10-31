@@ -13,29 +13,23 @@ describe 'Worker (Interval)', ->
     client = new Redis 'localhost', dropBufferSupport: true
     client.on 'ready', =>
       @client = new RedisNS 'test-worker', client
-      @client.del @timestampRedisKey
-      @client.del @queueName
+      @client.del @queueNme
+      done()
+
+  beforeEach (done) ->
+    @database = mongojs 'minute-man-worker-test', ['intervals']
+    @database.dropDatabase (error) =>
+      console.error error if error?
       done()
 
   beforeEach ->
-    @database = mongojs 'minute-man-worker-test', ['intervals']
-    @database.intervals.drop()
-
-  beforeEach ->
-    @sut = new Worker { @database, @client, @queueName }
+    @currentTime = moment()
+    @sut = new Worker { @database, @client, @queueName, @currentTime }
 
   afterEach (done) ->
     @sut.stop done
 
   describe '->do', ->
-    beforeEach (done) ->
-      @client.time (error, result) =>
-        return done error if error?
-        [ timestamp ] = result
-        @currentTime = moment(timestamp * 1000)
-        done()
-      return # redis promise fix
-
     describe 'when an interval record exists for every second in a minute', ->
       beforeEach (done) ->
         record =

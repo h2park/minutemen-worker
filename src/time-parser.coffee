@@ -4,23 +4,28 @@ moment     = require 'moment'
 debug      = require('debug')('minute-man-worker:time-parser')
 
 class TimeParser
-  constructor: ({ timestamp }) ->
-    @currentTime = @_getMoment(timestamp)
-    @currentDate = @currentTime.toDate()
-    @minTimeDiff = 0
+  constructor: ({ @timestamp }) ->
+    debug 'timestamp', @timestamp
+    throw new Error 'TimeParser: requires timestamp' unless @timestamp?
+    @minTimeDiff = 500
 
-  toString: =>
-    @currentTime.toDate().toString()
+  getCurrentTime: =>
+    return moment.unix(@timestamp).add(1, 'minute')
 
-  lastMinute: =>
-    return @currentTime.subtract(1, 'minute').unix()
+  getMaxRangeTime: =>
+    return @getCurrentTime().add(1, 'minute').unix()
 
-  nextMinute: (timestamp) =>
-    return @currentTime.add(1, 'minute').unix()
+  getMinRangeTime: =>
+    return @getCurrentTime().unix()
 
   getSecondsList: ({ intervalTime, cronString, processAt }) =>
-    return @getSecondsListFromIntervalTime { intervalTime, processAt } if intervalTime?
-    return @getSecondsListFromCronString { cronString, processAt } if cronString?
+    return @_getSecondsListFromIntervalTime { intervalTime, processAt } if intervalTime?
+    return @_getSecondsListFromCronString { cronString, processAt } if cronString?
+    throw new Error 'Invalid interval format'
+
+  getNextProcessAt: ({ processAt, cronString, intervalTime }) =>
+    return @_getNextProcessAtFromIntervalTime { intervalTime, processAt } if intervalTime?
+    return @_getNextProcessAtFromCronString { cronString, processAt } if cronString?
     throw new Error 'Invalid interval format'
 
   getNextTimeFromCronParser: (parser) =>
@@ -30,46 +35,43 @@ class TimeParser
       nextDate = parser.next()?.toDate()
       if nextDate?
         nextDate.setMilliseconds 0
-        timeDiff = nextDate - @currentDate.valueOf()
-    return unless nextDate?
-    return nextDate.valueOf() / 1000
+        timeDiff = nextDate - @getCurrentTime().valueOf()
+    return moment(nextDate.valueOf()).unix()
 
-  getSecondsListFromCronString: ({ cronString }) =>
-    parser = cronParser.parseExpression cronString, {@currentDate}
+  _getNextProcessAtFromIntervalTime: ({ processAt, intervalTime }) =>
+    throw new Error '_getNextProcessAtFromIntervalTime: requires processAt' unless processAt?
+    intervalSeconds = @_getSecondsFromMs(intervalTime)
+    oneMinute = 1000 * 60
+    intervalSeconds = 60 if intervalTime < oneMinute
+    moment.unix(processAt).add(intervalSeconds, 'seconds').unix()
+
+  _getSecondsListFromCronString: ({ cronString }) =>
+    # passing in currentDate only sets the timezone
+    parser = cronParser.parseExpression cronString, {currentDate: @getCurrentTime().toDate() }
     nextTimestamp = @getNextTimeFromCronParser(parser)
     secondsList = []
     debug 'cronString nextTimestamp', nextTimestamp
-    while @isInMinute nextTimestamp
+    while @_inRange nextTimestamp, 0, 1
       secondsList.push nextTimestamp
       nextTimestamp = @getNextTimeFromCronParser(parser)
     return secondsList
 
-  isInMinute: (timestamp) =>
-    return timestamp <= @nextMinute() and timestamp > @lastMinute()
-
-  getSecondsListFromIntervalTime: ({ intervalTime, processAt }) =>
-    secondsList = @_getSecondsList { intervalTime, processAt }
-    _.filter secondsList, (second) =>
-      return second <= @nextMinute()
-    return secondsList
-
-  getNextProcessAt: ({ processAt, intervalTime }) =>
-    intervalSeconds = @_getSecondsFromMs(intervalTime)
-    oneMinute = 1000 * 60
-    intervalSeconds = 60 if intervalTime < oneMinute
-    @_getMoment(processAt).add(intervalSeconds, 'seconds').unix()
-
-  _getSecondsList: ({ intervalTime, processAt }) =>
+  _getSecondsListFromIntervalTime: ({ intervalTime, processAt }) =>
+    throw new Error '_getSecondsListFromIntervalTime: requires processAt' unless processAt?
     intervalSeconds = @_getSecondsFromMs(intervalTime)
     times           = _.round(60 / intervalSeconds)
     offset          = _.round(60 / times)
-    _.times times, (n) =>
-      @_getMoment(processAt).add((offset * n), 'seconds').unix()
+    secondsList = _.times times, (n) =>
+      moment.unix(processAt).add((offset * n), 'seconds').unix()
+    return _.filter secondsList, (item) => @_inRange item
+
+  _inRange: (timestamp, minOffset=0, maxOffset=0) =>
+    min = @getMinRangeTime() + minOffset
+    max = @getMaxRangeTime() + maxOffset
+    debug "#{timestamp} >= #{min} and #{timestamp} < #{max}"
+    return timestamp >= min and timestamp < max
 
   _getSecondsFromMs: (ms) =>
     _.round(ms / 1000)
-
-  _getMoment: (timestamp) =>
-    moment(_.parseInt(timestamp) * 1000)
 
 module.exports = TimeParser

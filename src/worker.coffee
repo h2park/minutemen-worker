@@ -3,7 +3,8 @@ PaulRevere = require './paul-revere'
 
 class Worker
   constructor: (options={})->
-    { client, queueName, database, timestampRedisKey } = options
+    { client, queueName, database } = options
+    { timestamp } = options
     throw new Error('Worker: requires client') unless client?
     throw new Error('Worker: requires queueName') unless queueName?
     throw new Error('Worker: requires database') unless database?
@@ -13,6 +14,7 @@ class Worker
       database,
       client,
       queueName,
+      timestamp,
     }
 
   doWithNextTick: (callback) =>

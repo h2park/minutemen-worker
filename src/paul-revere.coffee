@@ -4,7 +4,7 @@ TimeParser = require './time-parser'
 debug      = require('debug')('minute-man-worker:paul-revere')
 
 class PaulRevere
-  constructor: ({ database, @client, @queueName, @timestampRedisKey }) ->
+  constructor: ({ database, @client, @queueName, @timestamp }) ->
     throw new Error('PaulRevere: requires database') unless database?
     throw new Error('PaulRevere: requires client') unless @client?
     throw new Error('PaulRevere: requires queueName') unless @queueName?
@@ -16,7 +16,7 @@ class PaulRevere
       debug 'got timeParser', timeParser.toString()
       @_findMilitia { timeParser }, (error) =>
         return callback error if error?
-        callback null
+        callback null, timeParser.getCurrentTime()
 
   _findMilitia: ({ timeParser }, callback) =>
     query =
@@ -24,16 +24,16 @@ class PaulRevere
       $or: [
         {
           processAt: {
-            $gt: timeParser.lastMinute()
-            $lte: timeParser.nextMinute()
+            $gt: timeParser.minMinute()
+            $lte: timeParser.maxMinute()
           }
         }
         { processAt: $exists: false }
       ]
     update = $set: { processing: true }
     debug 'findAndModifying', query, update
-    debug 'lastMinute', timeParser.lastMinute()
-    debug 'nextMinute', timeParser.nextMinute()
+    debug 'minMinute', timeParser.minMinute()
+    debug 'maxMinute', timeParser.maxMinute()
     @collection.findAndModify { query, update, sort: -1 }, (error, record) =>
       return callback error if error?
       return callback null unless record?
@@ -63,6 +63,7 @@ class PaulRevere
     return # redis fix
 
   _getTimeParser: (callback) =>
+    return callback null, new TimeParser { @timestamp } if @timestamp?
     @client.time (error, result) =>
       return callback error if error?
       [ timestamp ] = result ? []
