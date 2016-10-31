@@ -20,7 +20,6 @@ class PaulRevere
 
   _findMilitia: ({ timeParser }, callback) =>
     query =
-      'data.intervalTime': { $exists: true }
       processing: { $ne: true }
       $or: [
         {
@@ -44,8 +43,8 @@ class PaulRevere
   _processMilitia: ({ record, timeParser }, callback) =>
     debug 'process militia', { record }
     { processAt, data } = record
-    { intervalTime } = data
-    secondsList = timeParser.getSecondsList {intervalTime, processAt}
+    { intervalTime, cronString } = data
+    secondsList = timeParser.getSecondsList {intervalTime, cronString, processAt}
     @_deployMilitia { secondsList, record }, (error) =>
       return callback error if error?
       query  = _id: record._id

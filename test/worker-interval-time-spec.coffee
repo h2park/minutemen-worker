@@ -5,6 +5,7 @@ RedisNS = require '@octoblu/redis-ns'
 mongojs = require 'mongojs'
 moment  = require 'moment'
 uuid    = require 'uuid'
+async   = require 'async'
 
 describe 'Worker (Interval)', ->
   beforeEach (done) ->
@@ -34,6 +35,36 @@ describe 'Worker (Interval)', ->
         @currentTime = moment(timestamp * 1000)
         done()
       return # redis promise fix
+
+    describe 'when an interval record exists for every second in a minute', ->
+      beforeEach (done) ->
+        record =
+          processAt: @currentTime.unix()
+          ownerId: 'the-owner-id'
+          nodeId: 'the-node-id'
+          data:
+            nonce: uuid.v1()
+            sendTo: 'the-owner-id'
+            intervalTime: 1000
+            fireOnce: false
+            nodeId: 'the-node-id'
+        @database.intervals.insert record, (error, @record) =>
+          done error
+
+      beforeEach (done) ->
+        @sut.do done
+
+      it 'should create one for each second in the seconds queue', (done) ->
+        currentTime = @currentTime
+        async.timesSeries 60, (n, next) =>
+          secondWindow = currentTime.unix()
+          @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
+            return next error if error?
+            expect(result).to.exist
+            currentTime.add(1, 'seconds')
+            next()
+          return # redis fix
+        , done
 
     describe 'when an interval record exists for that minute', ->
       beforeEach (done) ->

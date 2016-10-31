@@ -1,23 +1,56 @@
 _          = require 'lodash'
+cronParser = require 'cron-parser'
 moment     = require 'moment'
+debug      = require('debug')('minute-man-worker:time-parser')
 
 class TimeParser
   constructor: ({ timestamp }) ->
-    @timestamp = @_getMoment(timestamp)
+    @currentTime = @_getMoment(timestamp)
+    @currentDate = @currentTime.toDate()
+    @minTimeDiff = 0
 
   toString: =>
-    @timestamp.toDate().toString()
+    @currentTime.toDate().toString()
 
   lastMinute: =>
-    return @timestamp.subtract(1, 'minute').unix()
+    return @currentTime.subtract(1, 'minute').unix()
 
   nextMinute: (timestamp) =>
-    return @timestamp.add(1, 'minute').unix()
+    return @currentTime.add(1, 'minute').unix()
 
-  getSecondsList: ({ intervalTime, processAt }) =>
+  getSecondsList: ({ intervalTime, cronString, processAt }) =>
+    return @getSecondsListFromIntervalTime { intervalTime, processAt } if intervalTime?
+    return @getSecondsListFromCronString { cronString, processAt } if cronString?
+    throw new Error 'Invalid interval format'
+
+  getNextTimeFromCronParser: (parser) =>
+    nextDate = null
+    timeDiff = 0
+    while timeDiff <= @minTimeDiff
+      nextDate = parser.next()?.toDate()
+      if nextDate?
+        nextDate.setMilliseconds 0
+        timeDiff = nextDate - @currentDate.valueOf()
+    return unless nextDate?
+    return nextDate.valueOf() / 1000
+
+  getSecondsListFromCronString: ({ cronString }) =>
+    parser = cronParser.parseExpression cronString, {@currentDate}
+    nextTimestamp = @getNextTimeFromCronParser(parser)
+    secondsList = []
+    debug 'cronString nextTimestamp', nextTimestamp
+    while @isInMinute nextTimestamp
+      secondsList.push nextTimestamp
+      nextTimestamp = @getNextTimeFromCronParser(parser)
+    return secondsList
+
+  isInMinute: (timestamp) =>
+    return timestamp <= @nextMinute() and timestamp > @lastMinute()
+
+  getSecondsListFromIntervalTime: ({ intervalTime, processAt }) =>
     secondsList = @_getSecondsList { intervalTime, processAt }
     _.filter secondsList, (second) =>
-      return second < @nextMinute()
+      return second <= @nextMinute()
     return secondsList
 
   getNextProcessAt: ({ processAt, intervalTime }) =>
