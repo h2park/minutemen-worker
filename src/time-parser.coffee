@@ -6,23 +6,27 @@ debug      = require('debug')('minute-man-worker:time-parser')
 
 class TimeParser
   constructor: ({ @timestamp }) ->
-    debug 'timestamp', @timestamp
     throw new Error 'TimeParser: requires timestamp' unless @timestamp?
+    debug 'currentTime', @getCurrentTime().unix()
     @minTimeDiff = 500
 
   getCurrentTime: =>
     return moment.unix(@timestamp).add(1, 'minute')
 
   getMaxRangeTime: =>
-    return @getCurrentTime().add(1, 'minute').unix()
+    return @getCurrentTime().add(1, 'minute')
 
   getMinRangeTime: =>
-    return @getCurrentTime().unix()
+    return @getCurrentTime()
 
   getSecondsList: ({ intervalTime, cronString, processAt }) =>
-    return @_getSecondsListFromIntervalTime { intervalTime, processAt } if intervalTime?
-    return @_getSecondsListFromCronString { cronString, processAt } if cronString?
-    throw new Error 'Invalid interval format'
+    if intervalTime?
+      secondsList = @_getSecondsListFromIntervalTime { intervalTime, processAt }
+    else if cronString?
+      secondsList = @_getSecondsListFromCronString { cronString, processAt }
+    else
+      throw new Error 'Invalid interval format'
+    return _.filter secondsList, @_inRange
 
   getNextProcessAt: ({ processAt, cronString, intervalTime }) =>
     return @_getNextProcessAtFromIntervalTime { intervalTime, processAt } if intervalTime?
@@ -37,42 +41,41 @@ class TimeParser
     moment.unix(processAt).add(intervalSeconds, 'seconds').unix()
 
   _getSecondsListFromCronString: ({ cronString }) =>
-    # handle crazy seconds problem
-    try
-      parser = later.parse.cron(cronString, true)
-      schedules = later.schedule(parser)
-    catch
-      parser = later.parse.cron(cronString)
-      schedules = later.schedule(parser)
-    return _.filter @_getNextTimes(schedules), @_inRange
+    hasSeconds = @_hasSeconds cronString
+    debug { hasSeconds, cronString }
+    parser = later.parse.cron(cronString, hasSeconds)
+    schedules = later.schedule(parser)
+    return @_getNextFromSchedules(schedules)
 
   _getSecondsListFromIntervalTime: ({ intervalTime, processAt }) =>
     throw new Error '_getSecondsListFromIntervalTime: requires processAt' unless processAt?
-    everySeconds = @_getSecondsFromMs(intervalTime)
-    debug 'everySeconds', everySeconds
-    parser = later.parse.recur()
-      .every(everySeconds)
-      .second()
-    schedules = later.schedule(parser)
-    return _.filter @_getNextTimes(schedules, processAt), @_inRange
+    debug 'processAt', processAt
+    intervalSeconds = @_getSecondsFromMs(intervalTime)
+    return [processAt] if intervalSeconds > 60 and @_inRange processAt
+    return @_getNextFromIntervalSeconds { intervalSeconds, processAt }
 
   _inRange: (timestamp) =>
     min = @getMinRangeTime()
     max = @getMaxRangeTime()
-    debug "#{timestamp} >= #{min} and #{timestamp} < #{max}"
-    return timestamp >= min and timestamp < max
+    debug "#{timestamp} >= #{min.unix()} and #{timestamp} < #{max.unix()}"
+    return timestamp >= min.unix() and timestamp < max.unix()
 
   _getSecondsFromMs: (ms) =>
     return _.round(ms / 1000)
 
-  _getNextTimes: (schedules, minTime) =>
-    debug 'minTime', minTime if minTime?
-    min = moment.unix(minTime ? @getMinRangeTime())
-    max = moment.unix(@getMaxRangeTime()).add(1, 'second')
+  _getNextFromSchedules: (schedules) =>
+    min = @getMinRangeTime()
+    max = @getMaxRangeTime().add(1, 'second')
     timesList = _.compact(schedules.next(60, min.toDate(), max.toDate()))
-    secondsList = _.map timesList, (time) =>
-      return moment(time).unix()
-    debug 'secondsList', secondsList
-    return secondsList
+    return _.map timesList, (time) => moment(time).unix()
+
+  _getNextFromIntervalSeconds: ({ intervalSeconds, processAt }) =>
+    times  = _.round(60 / intervalSeconds)
+    offset = _.round(60 / times)
+    return _.times times, (n) =>
+      return moment.unix(processAt).add((offset * n), 'seconds').unix()
+
+  _hasSeconds: (cronString) =>
+    return _.size(_.trim(cronString).split(' ')) == 6
 
 module.exports = TimeParser
