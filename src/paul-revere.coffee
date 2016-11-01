@@ -13,10 +13,10 @@ class PaulRevere
   findAndDeployMilitia: (callback) =>
     @_getTimeParser (error, timeParser) =>
       return callback error if error?
-      debug 'got timeParser', timeParser.toString()
+      debug 'got timeParser', timeParser.getCurrentTime().unix()
       @_findMilitia { timeParser }, (error) =>
         return callback error if error?
-        callback null, timeParser.getCurrentTime()
+        callback null
 
   _findMilitia: ({ timeParser }, callback) =>
     query =
@@ -24,16 +24,14 @@ class PaulRevere
       $or: [
         {
           processAt: {
-            $gt: timeParser.minMinute()
-            $lte: timeParser.maxMinute()
+            $gte: timeParser.getMinRangeTime().unix()
+            $lt: timeParser.getMaxRangeTime().unix()
           }
         }
         { processAt: $exists: false }
       ]
     update = $set: { processing: true }
-    debug 'findAndModifying', query, update
-    debug 'minMinute', timeParser.minMinute()
-    debug 'maxMinute', timeParser.maxMinute()
+    debug 'findAndModifying', JSON.stringify { query, update }, null, 2
     @collection.findAndModify { query, update, sort: -1 }, (error, record) =>
       return callback error if error?
       return callback null unless record?
@@ -50,7 +48,8 @@ class PaulRevere
       query  = _id: record._id
       update =
         processing: false
-        processAt:  timeParser.getNextProcessAt({ processAt, intervalTime })
+        processAt:  timeParser.getNextProcessAt({ processAt, cronString, intervalTime })
+      debug 'updating militia', { query, update }
       @collection.update query, { $set: update }, callback
 
   _deployMilitia: ({ secondsList, record }, callback) =>
@@ -58,7 +57,7 @@ class PaulRevere
     async.eachSeries secondsList, async.apply(@_pushSecond, record), callback
 
   _pushSecond: (record, queue, callback) =>
-    debug 'lpushing', { queue, record }
+    debug 'lpushing', { queue, record: record._id }
     @client.lpush "#{@queueName}:#{queue}", JSON.stringify(record), callback
     return # redis fix
 

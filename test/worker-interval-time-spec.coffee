@@ -24,16 +24,16 @@ describe 'Worker (Interval)', ->
 
   beforeEach ->
     @currentTime = moment()
-    @sut = new Worker { @database, @client, @queueName, @currentTime }
+    @sut = new Worker { @database, @client, @queueName, timestamp: 1478035080 }
 
   afterEach (done) ->
     @sut.stop done
 
   describe '->do', ->
-    describe 'when an interval record exists for every second in a minute', ->
+    describe 'when the intervalTime is 1 second', ->
       beforeEach (done) ->
         record =
-          processAt: @currentTime.unix()
+          processAt: 1478035140
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -49,21 +49,26 @@ describe 'Worker (Interval)', ->
         @sut.do done
 
       it 'should create one for each second in the seconds queue', (done) ->
-        currentTime = @currentTime
         async.timesSeries 60, (n, next) =>
-          secondWindow = currentTime.unix()
+          secondWindow = 1478035140 + n
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
             expect(result).to.exist
-            currentTime.add(1, 'seconds')
             next()
           return # redis fix
         , done
 
-    describe 'when an interval record exists for that minute', ->
+      it 'should have the correct processAt time', (done) ->
+        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+          return done error if error?
+          expect(updatedRecord.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.processing).to.be.false
+          done()
+
+    describe 'when the intervalTime is 10 seconds', ->
       beforeEach (done) ->
         record =
-          processAt: @currentTime.unix()
+          processAt: 1478035140
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -78,57 +83,27 @@ describe 'Worker (Interval)', ->
       beforeEach (done) ->
         @sut.do done
 
-      it 'should create a m+10s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(10, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
-
-      it 'should create a m+20s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(20, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
-
-      it 'should create a m+30s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(30, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
-
-      it 'should create a m+40s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(40, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
-
-      it 'should create a m+50s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(50, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
+      it 'should create one for each second in the seconds queue', (done) ->
+        async.timesSeries 6, (n, next) =>
+          secondWindow = 1478035140 + (n * 10)
+          @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
+            return next error if error?
+            expect(result).to.exist
+            next()
+          return # redis fix
+        , done
 
       it 'should have the correct processAt time', (done) ->
         @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal @currentTime.add(1, 'minute').unix()
+          expect(updatedRecord.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.processing).to.be.false
           done()
 
-    describe 'when an interval record with a crazy intervalTime', ->
+    describe 'when the intervalTime is 1250 ms', ->
       beforeEach (done) ->
         record =
-          processAt: @currentTime.unix()
+          processAt: 1478035140
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -143,33 +118,27 @@ describe 'Worker (Interval)', ->
       beforeEach (done) ->
         @sut.do done
 
-      it 'should create a m+1s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(1, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
-
-      it 'should create a m+2s in the seconds queue', (done) ->
-        secondWindow = @currentTime.add(2, 'seconds').unix()
-        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
-          return done error if error?
-          expect(result).to.exist
-          done()
-        return # redis fix
+      it 'should create one for each second in the seconds queue', (done) ->
+        async.timesSeries 60, (n, next) =>
+          secondWindow = 1478035140 + n
+          @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
+            return next error if error?
+            expect(result).to.exist
+            next()
+          return # redis fix
+        , done
 
       it 'should have the correct processAt time', (done) ->
         @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal @currentTime.add(1, 'minute').unix()
+          expect(updatedRecord.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.processing).to.be.false
           done()
 
-    describe 'when an interval record with a over-a-minute intervalTime', ->
+    describe 'when the intervalTime is 2 minutes', ->
       beforeEach (done) ->
         record =
-          processAt: @currentTime.unix()
+          processAt: 1478035140
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -184,8 +153,8 @@ describe 'Worker (Interval)', ->
       beforeEach (done) ->
         @sut.do done
 
-      it 'should create a m+0s in the seconds queue', (done) ->
-        secondWindow = @currentTime.unix()
+      it 'should create one for each second in the seconds queue', (done) ->
+        secondWindow = 1478035140
         @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
           return done error if error?
           expect(result).to.exist
@@ -195,6 +164,6 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal @currentTime.add(2, 'minute').unix()
+          expect(updatedRecord.processAt).to.equal 1478035140 + (60 * 2)
           expect(updatedRecord.processing).to.be.false
           done()

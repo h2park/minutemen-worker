@@ -7,7 +7,7 @@ moment  = require 'moment'
 uuid    = require 'uuid'
 async   = require 'async'
 
-describe 'Worker (CronString)', ->
+xdescribe 'Worker (CronString)', ->
   beforeEach (done) ->
     @queueName = 'seconds'
     client = new Redis 'localhost', dropBufferSupport: true
@@ -23,10 +23,7 @@ describe 'Worker (CronString)', ->
       done()
 
   beforeEach ->
-    @timestamp = moment().unix()
-    @currentTime = moment(_.parseInt(@timestamp) * 1000).add(1, 'minute')
-    @baseTime = moment(@currentTime).seconds(0)
-    @sut = new Worker { @database, @client, @queueName, @timestamp }
+    @sut = new Worker { @database, @client, @queueName, timestamp: 1478041516 }
 
   afterEach (done) ->
     @sut.stop done
@@ -35,7 +32,7 @@ describe 'Worker (CronString)', ->
     describe 'when an cronString that runs every second exists', ->
       beforeEach (done) ->
         record =
-          processAt: @currentTime.unix()
+          processAt: 1478041520
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -52,20 +49,25 @@ describe 'Worker (CronString)', ->
 
       it 'should create one for each second in the seconds queue', (done) ->
         async.timesSeries 60, (n, next) =>
-          secondWindow = @baseTime.unix()
+          secondWindow = 1478041520 + n
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            console.log secondWindow
             expect(result).to.exist
-            @baseTime.add(1, 'seconds')
             next()
           return # redis fix
         , done
 
+      it 'should have the correct processAt time', (done) ->
+        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+          return done error if error?
+          expect(updatedRecord.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.processing).to.be.false
+          done()
+
     describe 'when an cronString that runs every 15 seconds exists', ->
       beforeEach (done) ->
         record =
-          processAt: @currentTime.unix()
+          processAt: 1478041520
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:

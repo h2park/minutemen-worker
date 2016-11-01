@@ -2,12 +2,8 @@ _          = require 'lodash'
 TimeParser = require '../src/time-parser'
 moment     = require 'moment'
 
-describe.only 'TimeParser', ->
+describe 'TimeParser', ->
   describe 'no timestamp', ->
-    beforeEach ->
-      @timestamp = moment().unix()
-      @sut = new TimeParser { @timestamp }
-
     it 'should throw an error', ->
       expect(() =>
         new TimeParser {}
@@ -19,7 +15,6 @@ describe.only 'TimeParser', ->
 
     describe '->getCurrentTime', ->
       it 'should be set to the next minute', ->
-        console.log @sut.getCurrentTime().unix()
         nextMinute = moment.unix(1478033340).add(1, 'minute')
         expect(@sut.getCurrentTime().valueOf()).to.deep.equal nextMinute.valueOf()
 
@@ -35,7 +30,7 @@ describe.only 'TimeParser', ->
 
     describe '->getSecondsList', ->
       describe 'when using intervalTime', ->
-        describe 'when set to every 1000', ->
+        describe 'when set to 1 second', ->
           describe 'when the processAt is the timestamp', ->
             beforeEach ->
               @secondsList = @sut.getSecondsList { intervalTime: 1000, processAt: 1478033400 }
@@ -56,8 +51,8 @@ describe.only 'TimeParser', ->
             beforeEach ->
               @secondsList = @sut.getSecondsList { intervalTime: 1000, processAt: 1478033395 }
 
-            it 'should have 55 seconds in the list', ->
-              seconds = _.times 55, (n) => 1478033400 + n
+            it 'should have 60 seconds in the list', ->
+              seconds = _.times 60, (n) => 1478033400 + n
               expect(@secondsList).to.deep.equal seconds
 
         describe 'when set to every 1499', ->
@@ -151,7 +146,7 @@ describe.only 'TimeParser', ->
             @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 1000 }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033491
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 2 second', ->
           beforeEach ->
@@ -159,7 +154,7 @@ describe.only 'TimeParser', ->
             @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 2 * 1000 }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033492
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 30 second', ->
           beforeEach ->
@@ -167,7 +162,7 @@ describe.only 'TimeParser', ->
             @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 30 * 1000 }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033520
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 1 minute', ->
           beforeEach ->
@@ -175,7 +170,7 @@ describe.only 'TimeParser', ->
             @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 60 * 1000 }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033550
+            expect(@nextProcessAt).to.equal 1478033490
 
         describe 'when set to 10 minute', ->
           beforeEach ->
@@ -183,7 +178,7 @@ describe.only 'TimeParser', ->
             @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 10 * 60 * 1000 }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478034090
+            expect(@nextProcessAt).to.equal 1478034030
 
       describe 'when using cronString', ->
         beforeEach ->
@@ -194,28 +189,28 @@ describe.only 'TimeParser', ->
             @nextProcessAt = @sut.getNextProcessAt { cronString: '* * * * * *' }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033461
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 2 second', ->
           beforeEach ->
             @nextProcessAt = @sut.getNextProcessAt { cronString: '*/2 * * * * *' }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033462
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 30 second', ->
           beforeEach ->
             @nextProcessAt = @sut.getNextProcessAt { cronString: '*/30 * * * * *' }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033490
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 1 minute', ->
           beforeEach ->
             @nextProcessAt = @sut.getNextProcessAt { cronString: '* * * * *' }
 
           it 'should have the correct nextProcessAt', ->
-            expect(@nextProcessAt).to.equal 1478033520
+            expect(@nextProcessAt).to.equal 1478033460
 
         describe 'when set to 10 minute', ->
           beforeEach ->
