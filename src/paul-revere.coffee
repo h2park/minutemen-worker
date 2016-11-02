@@ -32,7 +32,7 @@ class PaulRevere
       ]
     update = $set: { processing: true }
     debug 'findAndModifying', JSON.stringify { query, update }, null, 2
-    @collection.findAndModify { query, update, sort: -1 }, (error, record) =>
+    @collection.findAndModify { query, update, sort: { processAt: 1 } }, (error, record) =>
       return callback error if error?
       debug 'no record found' unless record?
       return callback null unless record?
@@ -43,6 +43,7 @@ class PaulRevere
     debug 'process militia', { record }
     { processAt, data } = record
     { intervalTime, cronString } = data
+    processAt ?= timeParser.getCurrentTime().unix()
     secondsList = timeParser.getSecondsList {intervalTime, cronString, processAt}
     @_deployMilitia { secondsList, record }, (error) =>
       return callback error if error?

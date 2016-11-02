@@ -85,7 +85,7 @@ class TimeParser
 
   _getSecondsFromIntervalSeconds: ({ intervalSeconds, processAt }) =>
     debug 'intervalSeconds', intervalSeconds
-    startDate = @getMinRangeTimeFromProcessAt(processAt)
+    startDate = @getMinRangeTime()
     debug 'startDate', startDate.unix()
     secondsList = []
     _.times @_numberOfSecondsToCapture, =>
@@ -96,9 +96,9 @@ class TimeParser
     return secondsList
 
   _getSecondsFromCronString: ({ cronString, processAt }) =>
-    startDate = @getMinRangeTimeFromProcessAt(processAt)
+    startDate = @getMinRangeTime().subtract(1, 'second')
     debug 'startDate', startDate.unix()
-    secondsList = [processAt]
+    secondsList = []
     _.times @_numberOfSecondsToCapture, =>
       secondWindow = @_calculateNextCronInterval { cronString, startDate }
       debug 'secondWindow', secondWindow
