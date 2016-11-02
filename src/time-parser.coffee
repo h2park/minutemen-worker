@@ -1,6 +1,5 @@
 _          = require 'lodash'
 cronParser = require 'cron-parser'
-later      = require 'later'
 moment     = require 'moment'
 debug      = require('debug')('minute-man-worker:time-parser')
 
@@ -34,7 +33,7 @@ class TimeParser
     if intervalTime?
       secondsList = @_getSecondsListFromIntervalTime { intervalTime, processAt }
     else if cronString?
-      secondsList = @_getSecondsListFromCronString { cronString }
+      secondsList = @_getSecondsListFromCronString { cronString , processAt }
     else
       throw new Error 'Invalid interval format'
     return @_getCurrentSecondsFromList secondsList, processAt
@@ -43,24 +42,20 @@ class TimeParser
     if intervalTime?
       secondsList = @_getSecondsListFromIntervalTime { intervalTime, processAt }
     else if cronString?
-      secondsList = @_getSecondsListFromCronString { cronString }
+      secondsList = @_getSecondsListFromCronString { cronString, processAt }
     else
       throw new Error 'Invalid interval format'
     return @_getNextSecondFromList secondsList, processAt
 
-  _getSecondsListFromCronString: ({ cronString }) =>
+  _getSecondsListFromCronString: ({ cronString, processAt }) =>
+    throw new Error 'getNextProcessAtFromCronString: requires processAt' unless processAt?
     throw new Error 'getNextProcessAtFromCronString: requires cronString' unless cronString?
-    hasSeconds = @_hasSeconds cronString
-    debug { hasSeconds, cronString }
-    parser = later.parse.cron(cronString, hasSeconds)
-    schedules = later.schedule(parser)
-    return @_getSecondsFromSchedules(schedules)
+    return @_getSecondsFromCronString { cronString, processAt }
 
   _getSecondsListFromIntervalTime: ({ intervalTime, processAt }) =>
     throw new Error '_getSecondsListFromIntervalTime: requires processAt' unless processAt?
     throw new Error '_getSecondsListFromIntervalTime: requires intervalTime' unless intervalTime?
-    debug 'processAt', processAt
-    intervalSeconds = @_getSecondsFromMs(intervalTime)
+    intervalSeconds =  @_intervalTimeToSeconds(intervalTime)
     return @_getSecondsFromIntervalSeconds { intervalSeconds, processAt }
 
   _getNextSecondFromList: (secondsList, processAt) =>
@@ -78,7 +73,6 @@ class TimeParser
     throw new Error '_getCurrentSecondsFromList: requires secondsList' unless secondsList?
     throw new Error '_getCurrentSecondsFromList: requires processAt' unless processAt?
     max = @getMaxRangeTime().unix()
-    debug {processAt}
     min = @getMinRangeTimeFromProcessAt(processAt).unix()
     secondsList = _.filter secondsList, (time) =>
       inRange = time >= min and time < max
@@ -86,14 +80,8 @@ class TimeParser
       return inRange
     return secondsList
 
-  _getSecondsFromMs: (ms) =>
-    return _.round(ms / 1000)
-
-  _getSecondsFromSchedules: (schedules) =>
-    min = @getMinRangeTime()
-    debug 'seconds from schedules', min.unix()
-    timesList = schedules.next(@_numberOfSecondsToCapture, min.toDate())
-    return _.compact _.map timesList, (time) => moment(time).unix()
+  _intervalTimeToSeconds: (intervalTime) =>
+    return _.round(intervalTime / 1000)
 
   _getSecondsFromIntervalSeconds: ({ intervalSeconds, processAt }) =>
     debug 'intervalSeconds', intervalSeconds
@@ -107,7 +95,25 @@ class TimeParser
     debug 'secondsList', secondsList
     return secondsList
 
-  _hasSeconds: (cronString) =>
-    return _.size(_.trim(cronString).split(' ')) == 6
+  _getSecondsFromCronString: ({ cronString, processAt }) =>
+    startDate = @getMinRangeTimeFromProcessAt(processAt)
+    debug 'startDate', startDate.unix()
+    secondsList = [processAt]
+    _.times @_numberOfSecondsToCapture, =>
+      secondWindow = @_calculateNextCronInterval { cronString, startDate }
+      debug 'secondWindow', secondWindow
+      secondsList.push secondWindow
+      startDate = moment.unix(secondWindow)
+    debug 'secondsList', secondsList
+    return secondsList
+
+  _calculateNextCronInterval: ({ cronString, startDate }) =>
+    parser = cronParser.parseExpression cronString, currentDate: startDate.toDate()
+    nextTime = @_getNextTimeFromCronParser(parser)
+    nextTime = @_getNextTimeFromCronParser(parser) if nextTime.unix() == startDate.unix()
+    return nextTime.unix()
+
+  _getNextTimeFromCronParser: (parser) =>
+    return moment(parser.next()?.toDate().valueOf())
 
 module.exports = TimeParser
