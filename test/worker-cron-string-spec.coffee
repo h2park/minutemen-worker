@@ -32,14 +32,16 @@ describe 'Worker (CronString)', ->
     describe 'when an cronString that runs once every 10 seconds and has no processAt', ->
       beforeEach (done) ->
         record =
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
             cronString: '* * * * * *'
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -60,22 +62,24 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478041576 + 60
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60
+          expect(updatedRecord.metadata.processing).to.be.false
           done()
 
     describe 'when an cronString that runs every second exists', ->
       beforeEach (done) ->
         record =
-          processAt: 1478041581
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478041581
             cronString: '* * * * * *'
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -96,22 +100,24 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478041576 + 60
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60
+          expect(updatedRecord.metadata.processing).to.be.false
           done()
 
     describe 'when an cronString that runs every 15 seconds exists', ->
       beforeEach (done) ->
         record =
-          processAt: 1478041581
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
+          metadata:
+            cronString: '*/15 * * * * *'
+            processAt: 1478041581
+            fireOnce: false
           data:
             nonce: uuid.v1()
-            sendTo: 'the-owner-id'
-            cronString: '*/15 * * * * *'
-            fireOnce: false
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -132,6 +138,6 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478041650
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478041650
+          expect(updatedRecord.metadata.processing).to.be.false
           done()

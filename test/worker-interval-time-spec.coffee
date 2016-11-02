@@ -33,15 +33,17 @@ describe 'Worker (Interval)', ->
     describe 'when the intervalTime is 1 second', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
             intervalTime: 1000
             fireOnce: false
+            processAt: 1478035140
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -61,22 +63,24 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140 + 60
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processing).to.be.false
           done()
 
     describe 'when the intervalTime is 10 seconds', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 10000
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -96,21 +100,23 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140 + 60
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processing).to.be.false
           done()
 
     describe 'when the intervalTime is 10 seconds and there is no processAt', ->
       beforeEach (done) ->
         record =
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
             intervalTime: 10000
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -130,21 +136,24 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140 + 60
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processing).to.be.false
           done()
 
     describe 'when the intervalTime is 10 seconds and it should only be fired once', ->
       beforeEach (done) ->
         record =
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 10000
             fireOnce: true
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -176,16 +185,18 @@ describe 'Worker (Interval)', ->
     describe 'when the intervalTime is 30 seconds and it is set to processing', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          processing: true
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 30 * 1000
             fireOnce: false
+            processing: true
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -205,36 +216,40 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140
-          expect(updatedRecord.processing).to.be.true
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140
+          expect(updatedRecord.metadata.processing).to.be.true
           done()
 
     describe 'when the intervalTime is 30 seconds and there are two records', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035141
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035141
             intervalTime: 30 * 1000
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @recordTwo) =>
           done error
 
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 30 * 1000
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @recordOne) =>
           done error
 
@@ -249,7 +264,7 @@ describe 'Worker (Interval)', ->
             expect(result).to.exist
             [_, data] = result
             record = JSON.parse data
-            expect(record._id).to.equal @recordOne._id.toString()
+            expect(record.nonce).to.equal @recordOne.data.nonce
             next()
           return # redis fix
         , done
@@ -257,42 +272,46 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time on recordOne', (done) ->
         @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035200
+          expect(updatedRecord.metadata.processAt).to.equal 1478035200
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
         @database.soldiers.findOne { _id: @recordTwo._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035141
+          expect(updatedRecord.metadata.processAt).to.equal 1478035141
           done()
 
     describe 'when the intervalTime is 30 seconds and there are two records and one is processing', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035141
-          processing: true
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035141
             intervalTime: 30 * 1000
             fireOnce: false
+            processing: true
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @recordTwo) =>
           done error
 
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 30 * 1000
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @recordOne) =>
           done error
 
@@ -307,7 +326,7 @@ describe 'Worker (Interval)', ->
             expect(result).to.exist
             [_, data] = result
             record = JSON.parse data
-            expect(record._id).to.equal @recordOne._id.toString()
+            expect(record.nonce).to.equal @recordOne.data.nonce
             next()
           return # redis fix
         , done
@@ -315,27 +334,29 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time on recordOne', (done) ->
         @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035200
+          expect(updatedRecord.metadata.processAt).to.equal 1478035200
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
         @database.soldiers.findOne { _id: @recordTwo._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035141
+          expect(updatedRecord.metadata.processAt).to.equal 1478035141
           done()
 
     describe 'when the intervalTime is 1250 ms', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 1250
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -355,22 +376,24 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140 + 60
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processing).to.be.false
           done()
 
     describe 'when the intervalTime is 2 minutes', ->
       beforeEach (done) ->
         record =
-          processAt: 1478035140
-          ownerId: 'the-owner-id'
-          nodeId: 'the-node-id'
-          data:
-            nonce: uuid.v1()
-            sendTo: 'the-owner-id'
+          metadata:
+            processAt: 1478035140
             intervalTime: 60 * 1000 * 2
             fireOnce: false
+          data:
+            nonce: uuid.v1()
+            uuid: 'the-uuid'
+            token: 'the-token'
+            sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
+            transactionId: 'the-transaction-id'
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -388,6 +411,6 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140 + (60 * 2)
-          expect(updatedRecord.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + (60 * 2)
+          expect(updatedRecord.metadata.processing).to.be.false
           done()

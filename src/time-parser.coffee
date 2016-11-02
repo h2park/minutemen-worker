@@ -46,6 +46,7 @@ class TimeParser
       secondWindow = startDate.unix()
       startDate.add(@intervalSeconds, 'seconds')
       secondsList.push secondWindow
+      return
     #debug 'secondsList', secondsList
     return secondsList
 
@@ -58,6 +59,7 @@ class TimeParser
       secondWindow = @_calculateNextCronInterval { startDate }
       secondsList.push secondWindow
       startDate = moment.unix(secondWindow)
+      return
     #debug 'secondsList', secondsList
     return secondsList
 

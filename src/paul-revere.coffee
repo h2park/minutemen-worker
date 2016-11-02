@@ -1,8 +1,7 @@
 _          = require 'lodash'
 async      = require 'async'
 TimeParser = require './time-parser'
-TimeRange       = require './time-range'
-Secrecy    = require './secrecy'
+TimeRange  = require './time-range'
 Soldiers   = require './soldiers'
 debug      = require('debug')('minute-man-worker:paul-revere')
 
@@ -12,7 +11,6 @@ class PaulRevere
     throw new Error('PaulRevere: requires client') unless @client?
     throw new Error('PaulRevere: requires queueName') unless @queueName?
     @soldiers = new Soldiers { database }
-    @secrecy = new Secrecy { database }
 
   findAndDeploySoldier: (callback) =>
     @_getTimeRange (error, timeRange) =>
