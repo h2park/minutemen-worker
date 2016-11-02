@@ -22,6 +22,11 @@ class TimeParser
   getMinRangeTime: =>
     return @getCurrentTime()
 
+  getMinRangeTimeFromProcessAt: (processAt) =>
+    return @getMinRangeTime() if processAt < @getMinRangeTime().unix()
+    return @getMaxRangeTime() if processAt > @getMaxRangeTime().unix()
+    return moment.unix(processAt)
+
   _addOffset: (timestamp) =>
     return moment.unix(timestamp).add(@_offsetSeconds, 'seconds')
 
@@ -32,7 +37,7 @@ class TimeParser
       secondsList = @_getSecondsListFromCronString { cronString }
     else
       throw new Error 'Invalid interval format'
-    return @_getCurrentSecondsFromList secondsList
+    return @_getCurrentSecondsFromList secondsList, processAt
 
   getNextProcessAt: ({ processAt, cronString, intervalTime }) =>
     if intervalTime?
@@ -41,7 +46,7 @@ class TimeParser
       secondsList = @_getSecondsListFromCronString { cronString }
     else
       throw new Error 'Invalid interval format'
-    return @_getNextSecondFromList secondsList
+    return @_getNextSecondFromList secondsList, processAt
 
   _getSecondsListFromCronString: ({ cronString }) =>
     throw new Error 'getNextProcessAtFromCronString: requires cronString' unless cronString?
@@ -58,21 +63,26 @@ class TimeParser
     intervalSeconds = @_getSecondsFromMs(intervalTime)
     return @_getSecondsFromIntervalSeconds { intervalSeconds, processAt }
 
-  _getNextSecondFromList: (secondsList) =>
+  _getNextSecondFromList: (secondsList, processAt) =>
+    throw new Error '_getNextSecondFromList: requires secondsList' unless secondsList?
+    throw new Error '_getNextSecondFromList: requires processAt' unless processAt?
     max = @getMaxRangeTime().unix()
     nextSecond = _.find secondsList, (time) =>
       inRange = time >= max
-      debug "next #{time} >= #{max}", { inRange }
+      debug "next #{time} >= #{max}", inRange
       return inRange
     debug 'nextSecond', nextSecond
     return nextSecond
 
-  _getCurrentSecondsFromList: (secondsList) =>
+  _getCurrentSecondsFromList: (secondsList, processAt) =>
+    throw new Error '_getCurrentSecondsFromList: requires secondsList' unless secondsList?
+    throw new Error '_getCurrentSecondsFromList: requires processAt' unless processAt?
     max = @getMaxRangeTime().unix()
-    min = @getMinRangeTime().unix()
+    debug {processAt}
+    min = @getMinRangeTimeFromProcessAt(processAt).unix()
     secondsList = _.filter secondsList, (time) =>
       inRange = time >= min and time < max
-      debug "current #{time} >= #{min} and #{time} < #{max}", { inRange }
+      debug "current #{time} >= #{min} and #{time} < #{max}", inRange
       return inRange
     return secondsList
 
@@ -80,13 +90,14 @@ class TimeParser
     return _.round(ms / 1000)
 
   _getSecondsFromSchedules: (schedules) =>
-    min = @getMinRangeTime().toDate()
-    timesList = schedules.next(@_numberOfSecondsToCapture, min)
+    min = @getMinRangeTime()
+    debug 'seconds from schedules', min.unix()
+    timesList = schedules.next(@_numberOfSecondsToCapture, min.toDate())
     return _.compact _.map timesList, (time) => moment(time).unix()
 
   _getSecondsFromIntervalSeconds: ({ intervalSeconds, processAt }) =>
     debug 'intervalSeconds', intervalSeconds
-    startDate = moment.unix(processAt)
+    startDate = @getMinRangeTimeFromProcessAt(processAt)
     debug 'startDate', startDate.unix()
     secondsList = []
     _.times @_numberOfSecondsToCapture, =>

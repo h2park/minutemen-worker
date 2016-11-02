@@ -34,6 +34,7 @@ class PaulRevere
     debug 'findAndModifying', JSON.stringify { query, update }, null, 2
     @collection.findAndModify { query, update, sort: -1 }, (error, record) =>
       return callback error if error?
+      debug 'no record found' unless record?
       return callback null unless record?
       debug 'got record', { record }
       @_processMilitia { record, timeParser }, callback

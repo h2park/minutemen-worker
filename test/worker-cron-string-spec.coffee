@@ -7,7 +7,7 @@ moment  = require 'moment'
 uuid    = require 'uuid'
 async   = require 'async'
 
-xdescribe 'Worker (CronString)', ->
+describe 'Worker (CronString)', ->
   beforeEach (done) ->
     @queueName = 'seconds'
     client = new Redis 'localhost', dropBufferSupport: true
@@ -32,7 +32,7 @@ xdescribe 'Worker (CronString)', ->
     describe 'when an cronString that runs every second exists', ->
       beforeEach (done) ->
         record =
-          processAt: 1478041520
+          processAt: 1478041581
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -47,11 +47,12 @@ xdescribe 'Worker (CronString)', ->
       beforeEach (done) ->
         @sut.do done
 
-      it 'should create one for each second in the seconds queue', (done) ->
-        async.timesSeries 60, (n, next) =>
-          secondWindow = 1478041520 + n
+      it 'should create 55 in the seconds queue', (done) ->
+        async.timesSeries 55, (n, next) =>
+          secondWindow = 1478041581 + n
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
+            console.log { secondWindow } unless result?
             expect(result).to.exist
             next()
           return # redis fix
@@ -60,14 +61,14 @@ xdescribe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.processAt).to.equal 1478041576 + 60
           expect(updatedRecord.processing).to.be.false
           done()
 
     describe 'when an cronString that runs every 15 seconds exists', ->
       beforeEach (done) ->
         record =
-          processAt: 1478041520
+          processAt: 1478041581
           ownerId: 'the-owner-id'
           nodeId: 'the-node-id'
           data:
@@ -82,14 +83,20 @@ xdescribe 'Worker (CronString)', ->
       beforeEach (done) ->
         @sut.do done
 
-      it 'should create one item for every 15 seconds', (done) ->
+      it 'should create 4 in the seconds queue', (done) ->
         async.timesSeries 4, (n, next) =>
-          secondWindow = @baseTime.unix()
+          secondWindow = 1478041581 + (n * 15)
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            console.log secondWindow
+            console.log { secondWindow } unless result?
             expect(result).to.exist
-            @baseTime.add(15, 'seconds')
             next()
           return # redis fix
         , done
+
+      it 'should have the correct processAt time', (done) ->
+        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+          return done error if error?
+          expect(updatedRecord.processAt).to.equal 1478041650
+          expect(updatedRecord.processing).to.be.false
+          done()
