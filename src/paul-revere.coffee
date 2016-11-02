@@ -13,10 +13,7 @@ class PaulRevere
   findAndDeployMilitia: (callback) =>
     @_getTimeParser (error, timeParser) =>
       return callback error if error?
-      debug 'got timeParser', timeParser.getCurrentTime().unix()
-      @_findMilitia { timeParser }, (error) =>
-        return callback error if error?
-        callback null
+      @_findMilitia { timeParser }, callback
 
   _findMilitia: ({ timeParser }, callback) =>
     query =
@@ -31,8 +28,11 @@ class PaulRevere
         { processAt: $exists: false }
       ]
     update = $set: { processing: true }
-    debug 'findAndModifying', JSON.stringify { query, update }, null, 2
-    @collection.findAndModify { query, update, sort: { processAt: 1 } }, (error, record) =>
+    sort = { processAt: 1 }
+    debug 'findAndModifying.query', query
+    debug 'findAndModifying.update', update
+    debug 'findAndModifying.sort', sort
+    @collection.findAndModify { query, update, sort }, (error, record) =>
       return callback error if error?
       debug 'no record found' unless record?
       return callback null unless record?
@@ -57,6 +57,7 @@ class PaulRevere
     async.eachSeries secondsList, async.apply(@_pushSecond, record), callback
 
   _removeMilitia: ({ record }, callback) =>
+    debug 'removing militia'
     @collection.remove { _id: record._id }, callback
 
   _updateMilitia: ({ record, nextProcessAt }, callback) =>
@@ -79,5 +80,6 @@ class PaulRevere
       [ timestamp ] = result ? []
       return callback new Error('Missing timestamp in redis') unless timestamp?
       callback null, new TimeParser { timestamp }
+    return # redis fix
 
 module.exports = PaulRevere

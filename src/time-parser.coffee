@@ -30,6 +30,7 @@ class TimeParser
     return moment.unix(timestamp).add(@_offsetSeconds, 'seconds')
 
   getSecondsList: ({ intervalTime, cronString, processAt }) =>
+    debug 'getSecondsList', { intervalTime, cronString, processAt }
     if intervalTime?
       secondsList = @_getSecondsListFromIntervalTime { intervalTime, processAt }
     else if cronString?
@@ -38,7 +39,8 @@ class TimeParser
       throw new Error 'Invalid interval format'
     return @_getCurrentSecondsFromList secondsList, processAt
 
-  getNextProcessAt: ({ processAt, cronString, intervalTime }) =>
+  getNextProcessAt: ({ intervalTime, cronString, processAt }) =>
+    debug 'getNextProcessAt', { intervalTime, cronString, processAt }
     if intervalTime?
       secondsList = @_getSecondsListFromIntervalTime { intervalTime, processAt }
     else if cronString?
@@ -64,7 +66,7 @@ class TimeParser
     max = @getMaxRangeTime().unix()
     nextSecond = _.find secondsList, (time) =>
       inRange = time >= max
-      debug "next #{time} >= #{max}", inRange
+      # debug "next #{time} >= #{max}", inRange
       return inRange
     debug 'nextSecond', nextSecond
     return nextSecond
@@ -76,8 +78,9 @@ class TimeParser
     min = @getMinRangeTimeFromProcessAt(processAt).unix()
     secondsList = _.filter secondsList, (time) =>
       inRange = time >= min and time < max
-      debug "current #{time} >= #{min} and #{time} < #{max}", inRange
+      #debug "current #{time} >= #{min} and #{time} < #{max}", inRange
       return inRange
+    debug "found #{secondsList.length} seconds"
     return secondsList
 
   _intervalTimeToSeconds: (intervalTime) =>
@@ -86,25 +89,25 @@ class TimeParser
   _getSecondsFromIntervalSeconds: ({ intervalSeconds, processAt }) =>
     debug 'intervalSeconds', intervalSeconds
     startDate = @getMinRangeTime()
-    debug 'startDate', startDate.unix()
+    debug 'interval startDate', startDate.unix()
     secondsList = []
     _.times @_numberOfSecondsToCapture, =>
       secondWindow = startDate.unix()
       startDate.add(intervalSeconds, 'seconds')
       secondsList.push secondWindow
-    debug 'secondsList', secondsList
+    #debug 'secondsList', secondsList
     return secondsList
 
   _getSecondsFromCronString: ({ cronString, processAt }) =>
+    debug 'cronString', cronString
     startDate = @getMinRangeTime().subtract(1, 'second')
-    debug 'startDate', startDate.unix()
+    debug 'cron startDate', startDate.unix()
     secondsList = []
     _.times @_numberOfSecondsToCapture, =>
       secondWindow = @_calculateNextCronInterval { cronString, startDate }
-      debug 'secondWindow', secondWindow
       secondsList.push secondWindow
       startDate = moment.unix(secondWindow)
-    debug 'secondsList', secondsList
+    #debug 'secondsList', secondsList
     return secondsList
 
   _calculateNextCronInterval: ({ cronString, startDate }) =>
