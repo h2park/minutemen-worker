@@ -6,28 +6,30 @@ class Soldiers
 
   get: ({ min, max }, callback) =>
     query = {
-      processing: { $ne: true }
+      'metadata.processing': { $ne: true }
       $or: [
-        {
-          processAt: { $gte: min, $lt: max }
-        }
-        { processAt: $exists: false }
+        { 'metadata.processAt': { $gte: min, $lt: max } }
+        { 'metadata.processAt': $exists: false }
       ]
     }
-    update = { $set: { processing: true } }
-    sort = { processAt: 1 }
-    debug 'get.query', JSON.stringify query, null, 2
+    update = { 'metadata.processing': true }
+    sort = { 'metadata.processAt': 1 }
+    debug 'get.query', JSON.stringify(query)
     debug 'get.update', update
     debug 'get.sort', sort
-    @collection.findAndModify { query, update, sort }, (error, record) =>
+    @collection.findAndModify { query, update: { $set: update }, sort }, (error, record) =>
       return callback error if error?
       debug 'found record', record if record?
       debug 'no record found' unless record?
       callback null, record
 
-  update: ({ _id, nextProcessAt }, callback) =>
+  update: ({ _id, nextProcessAt, processAt }, callback) =>
     query  = { _id: _id }
-    update = { processing: false, processAt: nextProcessAt }
+    update = {
+      'metadata.processing': false
+      'metadata.processAt': nextProcessAt
+      'metadata.lastProcessAt': processAt
+    }
     debug 'updating solider', { query, update }
     @collection.update query, { $set: update }, callback
 

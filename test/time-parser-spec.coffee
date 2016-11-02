@@ -1,121 +1,107 @@
 _          = require 'lodash'
 TimeParser = require '../src/time-parser'
+TimeRange  = require '../src/time-range'
 moment     = require 'moment'
 
 describe 'TimeParser', ->
-  describe 'no timestamp', ->
+  describe 'no timeRange', ->
     it 'should throw an error', ->
       expect(() =>
         new TimeParser {}
       ).to.throw
 
-  describe 'fixed timestamp', ->
+  describe 'fixed timeRange', ->
     beforeEach ->
-      @sut = new TimeParser { timestamp: 1478033340 }
+      @timeRange = new TimeRange { timestamp: 1478033340 }
 
-    describe '->getCurrentTime', ->
-      it 'should be set to the next minute', ->
-        nextMinute = moment.unix(1478033340).add(1, 'minute')
-        expect(@sut.getCurrentTime().valueOf()).to.deep.equal nextMinute.valueOf()
-
-    describe '->getMaxRangeTime', ->
-      it 'should be set to the next minute after the currentTime', ->
-        maxMinute = moment.unix(1478033340).add(2, 'minute')
-        expect(@sut.getMaxRangeTime().valueOf()).to.deep.equal maxMinute.valueOf()
-
-    describe '->getMinRangeTime', ->
-      it 'should be set to the same minute as the currentTime', ->
-        minMinute = moment.unix(1478033340).add(1, 'minute')
-        expect(@sut.getMinRangeTime().valueOf()).to.deep.equal minMinute.valueOf()
-
-    describe '->getSecondsList', ->
+    describe '->getCurrentSeconds', ->
       describe 'when using intervalTime', ->
         describe 'when set to 1 second', ->
           describe 'when the processAt is the timestamp', ->
             beforeEach ->
-              @secondsList = @sut.getSecondsList { intervalTime: 1000, processAt: 1478033400 }
+              @sut = new TimeParser { @timeRange, intervalTime: 1000, processAt: 1478033400 }
 
             it 'should have all 60 seconds in the list', ->
               _.times 60, (n) =>
-                expect(@secondsList).to.include 1478033400 + n
+                expect(@sut.getCurrentSeconds()).to.include 1478033400 + n
 
           describe 'when the processAt is 5 seconds in the future', ->
             beforeEach ->
-              @secondsList = @sut.getSecondsList { intervalTime: 1000, processAt: 1478033405 }
+              @sut = new TimeParser { @timeRange, intervalTime: 1000, processAt: 1478033405 }
 
             it 'should have all 55 seconds in the list', ->
               seconds = _.times 55, (n) => 1478033405 + n
-              expect(@secondsList).to.deep.equal seconds
+              expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
           describe 'when the processAt is 5 seconds in the past', ->
             beforeEach ->
-              @secondsList = @sut.getSecondsList { intervalTime: 1000, processAt: 1478033395 }
+              @sut = new TimeParser { @timeRange, intervalTime: 1000, processAt: 1478033395 }
 
             it 'should have 60 seconds in the list', ->
               seconds = _.times 60, (n) => 1478033400 + n
-              expect(@secondsList).to.deep.equal seconds
+              expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
         describe 'when set to every 1499', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { intervalTime: 1499, processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, intervalTime: 1499, processAt: 1478033400 }
 
           it 'should have all 60 seconds in the list', ->
             seconds = _.times 60, (n) => 1478033400 + n
-            expect(@secondsList).to.deep.equal seconds
+            expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
         describe 'when set to every 2000', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { intervalTime: 2000, processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, intervalTime: 2000, processAt: 1478033400 }
 
           it 'should have 30 seconds in the list', ->
             seconds = _.times 30, (n) => 1478033400 + (n * 2)
-            expect(@secondsList).to.deep.equal seconds
+            expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
         describe 'when set to every 1500', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { intervalTime: 1500, processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, intervalTime: 1500, processAt: 1478033400 }
 
           it 'should have 30 seconds in the list', ->
             seconds = _.times 30, (n) => 1478033400 + (n * 2)
-            expect(@secondsList).to.deep.equal seconds
+            expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
         describe 'when set to every 30 seconds', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { intervalTime: 30000, processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, intervalTime: 30000, processAt: 1478033400 }
 
           it 'should have 30 seconds in the list', ->
-            expect(@secondsList).to.deep.equal [1478033400, 1478033430]
+            expect(@sut.getCurrentSeconds()).to.deep.equal [1478033400, 1478033430]
 
         describe 'when set to every 10 minutes and should not be processed', ->
           beforeEach ->
-            processAt = @sut.getCurrentTime().add(2, 'minutes').unix()
-            @secondsList = @sut.getSecondsList { intervalTime: (10 * 60 * 1000), processAt }
+            processAt = @timeRange.current().add(2, 'minutes').unix()
+            @sut = new TimeParser { @timeRange, intervalTime: (10 * 60 * 1000), processAt }
 
           it 'should have a length of 0', ->
-            expect(@secondsList.length).to.equal 0
+            expect(@sut.getCurrentSeconds().length).to.equal 0
 
         describe 'when set to every 10 minutes and should be processed', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { intervalTime: (10 * 60 * 1000), processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, intervalTime: (10 * 60 * 1000), processAt: 1478033400 }
 
           it 'should have second for the processAt', ->
-            expect(@secondsList).to.deep.equal [1478033400]
+            expect(@sut.getCurrentSeconds()).to.deep.equal [1478033400]
 
       describe 'when using cron', ->
         describe 'when set every second', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { cronString: '* * * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '* * * * * *', processAt: 1478033400 }
 
           it 'should have 60 seconds in the list', ->
             seconds = _.times 60, (n) => 1478033400 + n
-            expect(@secondsList).to.deep.equal seconds
+            expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
         describe 'when set every 10 seconds', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { cronString: '*/10 * * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '*/10 * * * * *', processAt: 1478033400 }
 
           it 'should have 6 seconds in the list', ->
-            expect(@secondsList).to.deep.equal [
+            expect(@sut.getCurrentSeconds()).to.deep.equal [
               1478033400,
               1478033410,
               1478033420,
@@ -126,24 +112,25 @@ describe 'TimeParser', ->
 
         describe 'when set every minute', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { cronString: '* * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '* * * * *', processAt: 1478033400 }
 
           it 'should have the correct second in the list', ->
-            expect(@secondsList).to.deep.equal [1478033400]
+            expect(@sut.getCurrentSeconds()).to.deep.equal [1478033400]
 
         describe 'when set every 10 minute', ->
           beforeEach ->
-            @secondsList = @sut.getSecondsList { cronString: '*/10 * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '*/10 * * * *', processAt: 1478033400 }
 
           it 'should have the correct second in the list', ->
-            expect(@secondsList).to.deep.equal [1478033400]
+            expect(@sut.getCurrentSeconds()).to.deep.equal [1478033400]
 
     describe '->getNextProcessAt', ->
       describe 'when using intervalTime', ->
         describe 'when set to 1 second', ->
           beforeEach ->
-            @currentProcessAt = @sut.getCurrentTime().add(30, 'seconds')
-            @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 1000 }
+            @currentProcessAt = @timeRange.current().add(30, 'seconds')
+            @sut = new TimeParser { @timeRange, processAt: @currentProcessAt.unix(), intervalTime: 1000 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
@@ -151,8 +138,9 @@ describe 'TimeParser', ->
 
         describe 'when set to 2 second', ->
           beforeEach ->
-            @currentProcessAt = @sut.getCurrentTime().add(30, 'seconds')
-            @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 2 * 1000 }
+            @currentProcessAt = @timeRange.current().add(30, 'seconds')
+            @sut = new TimeParser { @timeRange, processAt: @currentProcessAt.unix(), intervalTime: 2 * 1000 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
@@ -160,8 +148,9 @@ describe 'TimeParser', ->
 
         describe 'when set to 30 second', ->
           beforeEach ->
-            @currentProcessAt = @sut.getCurrentTime().add(30, 'seconds')
-            @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 30 * 1000 }
+            @currentProcessAt = @timeRange.current().add(30, 'seconds')
+            @sut = new TimeParser { @timeRange, processAt: @currentProcessAt.unix(), intervalTime: 30 * 1000 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
@@ -169,8 +158,9 @@ describe 'TimeParser', ->
 
         describe 'when set to 1 minute', ->
           beforeEach ->
-            @currentProcessAt = @sut.getCurrentTime().add(30, 'seconds')
-            @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 60 * 1000 }
+            @currentProcessAt = @timeRange.current().add(30, 'seconds')
+            @sut = new TimeParser { @timeRange, processAt: @currentProcessAt.unix(), intervalTime: 60 * 1000 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
@@ -178,8 +168,9 @@ describe 'TimeParser', ->
 
         describe 'when set to 10 minute', ->
           beforeEach ->
-            @currentProcessAt = @sut.getCurrentTime().add(30, 'seconds')
-            @nextProcessAt = @sut.getNextProcessAt { processAt: @currentProcessAt.unix(), intervalTime: 10 * 60 * 1000 }
+            @currentProcessAt = @timeRange.current().add(30, 'seconds')
+            @sut = new TimeParser { @timeRange, processAt: @currentProcessAt.unix(), intervalTime: 10 * 60 * 1000 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
@@ -187,11 +178,12 @@ describe 'TimeParser', ->
 
       describe 'when using cronString', ->
         beforeEach ->
-          @baseTime = @sut.getCurrentTime().add(1, 'minute')
+          @baseTime = @timeRange.current().add(1, 'minute')
 
         describe 'when set to 1 second', ->
           beforeEach ->
-            @nextProcessAt = @sut.getNextProcessAt { cronString: '* * * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '* * * * * *', processAt: 1478033400 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal 1478033400
@@ -199,7 +191,8 @@ describe 'TimeParser', ->
 
         describe 'when set to 2 second', ->
           beforeEach ->
-            @nextProcessAt = @sut.getNextProcessAt { cronString: '*/2 * * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '*/2 * * * * *', processAt: 1478033400 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal 1478033400
@@ -207,7 +200,8 @@ describe 'TimeParser', ->
 
         describe 'when set to 30 second', ->
           beforeEach ->
-            @nextProcessAt = @sut.getNextProcessAt { cronString: '*/30 * * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '*/30 * * * * *', processAt: 1478033400 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal 1478033400
@@ -215,7 +209,8 @@ describe 'TimeParser', ->
 
         describe 'when set to 1 minute', ->
           beforeEach ->
-            @nextProcessAt = @sut.getNextProcessAt { cronString: '* * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '* * * * *', processAt: 1478033400 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal 1478033400
@@ -223,7 +218,8 @@ describe 'TimeParser', ->
 
         describe 'when set to 10 minute', ->
           beforeEach ->
-            @nextProcessAt = @sut.getNextProcessAt { cronString: '*/10 * * * *', processAt: 1478033400 }
+            @sut = new TimeParser { @timeRange, cronString: '*/10 * * * *', processAt: 1478033400 }
+            @nextProcessAt = @sut.getNextSecond()
 
           it 'should have the correct nextProcessAt', ->
             expect(@nextProcessAt).to.not.equal 1478033400
