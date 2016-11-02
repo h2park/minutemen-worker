@@ -134,6 +134,45 @@ describe 'Worker (Interval)', ->
           expect(updatedRecord.processing).to.be.false
           done()
 
+    describe 'when the intervalTime is 10 seconds and it should only be fired once', ->
+      beforeEach (done) ->
+        record =
+          ownerId: 'the-owner-id'
+          nodeId: 'the-node-id'
+          data:
+            nonce: uuid.v1()
+            sendTo: 'the-owner-id'
+            intervalTime: 10000
+            fireOnce: true
+            nodeId: 'the-node-id'
+        @database.intervals.insert record, (error, @record) =>
+          done error
+
+      beforeEach (done) ->
+        @sut.do done
+
+      it 'should create one second in the seconds queue', (done) ->
+        secondWindow = 1478035140
+        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
+          return done error if error?
+          expect(result).to.exist
+          done()
+        return # redis fix
+
+      it 'should not create the next one', (done) ->
+        secondWindow = 1478035140 + 10
+        @client.llen "#{@queueName}:#{secondWindow}", (error, count) =>
+          return done error if error?
+          expect(count).to.equal 0
+          done()
+        return # redis fix
+
+      it 'should have the correct processAt time', (done) ->
+        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+          return done error if error?
+          expect(updatedRecord).to.not.exist
+          done()
+
     describe 'when the intervalTime is 30 seconds and it is set to processing', ->
       beforeEach (done) ->
         record =

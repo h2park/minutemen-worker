@@ -42,21 +42,30 @@ class PaulRevere
   _processMilitia: ({ record, timeParser }, callback) =>
     debug 'process militia', { record }
     { processAt, data } = record
-    { intervalTime, cronString } = data
+    { intervalTime, cronString, fireOnce } = data
     processAt ?= timeParser.getCurrentTime().unix()
     secondsList = timeParser.getSecondsList {intervalTime, cronString, processAt}
-    @_deployMilitia { secondsList, record }, (error) =>
+    @_deployMilitia { secondsList, record, fireOnce }, (error) =>
       return callback error if error?
-      query  = _id: record._id
-      update =
-        processing: false
-        processAt:  timeParser.getNextProcessAt({ processAt, cronString, intervalTime })
-      debug 'updating militia', { query, update }
-      @collection.update query, { $set: update }, callback
+      return @_removeMilitia { record }, callback if fireOnce
+      nextProcessAt = timeParser.getNextProcessAt({ processAt, cronString, intervalTime })
+      @_updateMilitia { record, nextProcessAt }, callback
 
-  _deployMilitia: ({ secondsList, record }, callback) =>
-    debug 'deploy militia', _.size(secondsList)
+  _deployMilitia: ({ secondsList, record, fireOnce }, callback) =>
+    secondsList = [_.first(secondsList)] if fireOnce
+    debug 'deploy militia', secondsList, { fireOnce }
     async.eachSeries secondsList, async.apply(@_pushSecond, record), callback
+
+  _removeMilitia: ({ record }, callback) =>
+    @collection.remove { _id: record._id }, callback
+
+  _updateMilitia: ({ record, nextProcessAt }, callback) =>
+    query  = _id: record._id
+    update =
+      processing: false
+      processAt:  nextProcessAt
+    debug 'updating militia', { query, update }
+    @collection.update query, { $set: update }, callback
 
   _pushSecond: (record, queue, callback) =>
     debug 'lpushing', { queue, record: record._id }
