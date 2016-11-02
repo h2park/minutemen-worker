@@ -89,10 +89,8 @@ class Command
       return @die error if error?
       @getWorkerClient (error, client) =>
         return @die error if error?
-
-        worker = new Worker { client, database, @queueName, @timestampRedisKey }
+        worker = new Worker { client, database, @queueName }
         worker.run @die
-
         sigtermHandler = new SigtermHandler { events: ['SIGINT', 'SIGTERM']}
         sigtermHandler.register worker.stop
 
