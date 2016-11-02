@@ -1,6 +1,8 @@
 _          = require 'lodash'
 async      = require 'async'
 TimeParser = require './time-parser'
+Secrecy    = require './secrecy'
+Soldiers   = require './soldiers'
 debug      = require('debug')('minute-man-worker:paul-revere')
 
 class PaulRevere
@@ -8,65 +10,35 @@ class PaulRevere
     throw new Error('PaulRevere: requires database') unless database?
     throw new Error('PaulRevere: requires client') unless @client?
     throw new Error('PaulRevere: requires queueName') unless @queueName?
-    @collection = database.collection 'intervals'
+    @soldiers = new Soldiers { database }
+    @secrecy = new Secrecy { database }
 
-  findAndDeployMilitia: (callback) =>
+  findAndDeploySoldier: (callback) =>
     @_getTimeParser (error, timeParser) =>
-      return callback error if error?
-      @_findMilitia { timeParser }, callback
+      return callback(error) if error?
+      min = timeParser.getMinRangeTime().unix()
+      max = timeParser.getMaxRangeTime().unix()
+      @soldiers.get { min, max }, (error, record) =>
+        return callback(error) if error?
+        return callback() unless record?
+        @_processSoldier { record, timeParser }, callback
 
-  _findMilitia: ({ timeParser }, callback) =>
-    query =
-      processing: { $ne: true }
-      $or: [
-        {
-          processAt: {
-            $gte: timeParser.getMinRangeTime().unix()
-            $lt: timeParser.getMaxRangeTime().unix()
-          }
-        }
-        { processAt: $exists: false }
-      ]
-    update = $set: { processing: true }
-    sort = { processAt: 1 }
-    debug 'findAndModifying.query', query
-    debug 'findAndModifying.update', update
-    debug 'findAndModifying.sort', sort
-    @collection.findAndModify { query, update, sort }, (error, record) =>
-      return callback error if error?
-      debug 'no record found' unless record?
-      return callback null unless record?
-      debug 'got record', { record }
-      @_processMilitia { record, timeParser }, callback
-
-  _processMilitia: ({ record, timeParser }, callback) =>
-    debug 'process militia', { record }
-    { processAt, data } = record
+  _processSoldier: ({ record, timeParser }, callback) =>
+    debug 'process solider', { record }
+    { processAt, data, _id } = record
     { intervalTime, cronString, fireOnce } = data
     processAt ?= timeParser.getCurrentTime().unix()
     secondsList = timeParser.getSecondsList {intervalTime, cronString, processAt}
-    @_deployMilitia { secondsList, record, fireOnce }, (error) =>
-      return callback error if error?
-      return @_removeMilitia { record }, callback if fireOnce
+    @_deploySoldier { secondsList, record, fireOnce }, (error) =>
+      return callback(error) if error?
+      return @soldiers.remove { _id }, callback if fireOnce
       nextProcessAt = timeParser.getNextProcessAt({ processAt, cronString, intervalTime })
-      @_updateMilitia { record, nextProcessAt }, callback
+      @soldiers.update { _id, nextProcessAt }, callback
 
-  _deployMilitia: ({ secondsList, record, fireOnce }, callback) =>
+  _deploySoldier: ({ secondsList, record, fireOnce }, callback) =>
     secondsList = [_.first(secondsList)] if fireOnce
-    debug 'deploy militia', secondsList, { fireOnce }
+    debug 'deploy solider', secondsList, { fireOnce }
     async.eachSeries secondsList, async.apply(@_pushSecond, record), callback
-
-  _removeMilitia: ({ record }, callback) =>
-    debug 'removing militia'
-    @collection.remove { _id: record._id }, callback
-
-  _updateMilitia: ({ record, nextProcessAt }, callback) =>
-    query  = _id: record._id
-    update =
-      processing: false
-      processAt:  nextProcessAt
-    debug 'updating militia', { query, update }
-    @collection.update query, { $set: update }, callback
 
   _pushSecond: (record, queue, callback) =>
     debug 'lpushing', { queue, record: record._id }

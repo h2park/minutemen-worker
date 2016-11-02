@@ -17,7 +17,7 @@ describe 'Worker (Interval)', ->
       done()
 
   beforeEach (done) ->
-    @database = mongojs 'minute-man-worker-test', ['intervals']
+    @database = mongojs 'minute-man-worker-test', ['soldiers']
     @database.dropDatabase (error) =>
       console.error error if error?
       done()
@@ -42,7 +42,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 1000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -59,7 +59,7 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.processing).to.be.false
@@ -77,7 +77,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 10000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -94,7 +94,7 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.processing).to.be.false
@@ -111,7 +111,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 10000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -128,7 +128,7 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.processing).to.be.false
@@ -145,7 +145,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 10000
             fireOnce: true
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -168,7 +168,7 @@ describe 'Worker (Interval)', ->
         return # redis fix
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord).to.not.exist
           done()
@@ -186,7 +186,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 30 * 1000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -203,7 +203,7 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035140
           expect(updatedRecord.processing).to.be.true
@@ -221,7 +221,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 30 * 1000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @recordTwo) =>
+        @database.soldiers.insert record, (error, @recordTwo) =>
           done error
 
       beforeEach (done) ->
@@ -235,7 +235,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 30 * 1000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @recordOne) =>
+        @database.soldiers.insert record, (error, @recordOne) =>
           done error
 
       beforeEach (done) ->
@@ -255,13 +255,13 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time on recordOne', (done) ->
-        @database.intervals.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035200
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
-        @database.intervals.findOne { _id: @recordTwo._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @recordTwo._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035141
           done()
@@ -279,7 +279,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 30 * 1000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @recordTwo) =>
+        @database.soldiers.insert record, (error, @recordTwo) =>
           done error
 
       beforeEach (done) ->
@@ -293,7 +293,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 30 * 1000
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @recordOne) =>
+        @database.soldiers.insert record, (error, @recordOne) =>
           done error
 
       beforeEach (done) ->
@@ -313,13 +313,13 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time on recordOne', (done) ->
-        @database.intervals.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035200
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
-        @database.intervals.findOne { _id: @recordTwo._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @recordTwo._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035141
           done()
@@ -336,7 +336,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 1250
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -353,7 +353,7 @@ describe 'Worker (Interval)', ->
         , done
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.processing).to.be.false
@@ -371,7 +371,7 @@ describe 'Worker (Interval)', ->
             intervalTime: 60 * 1000 * 2
             fireOnce: false
             nodeId: 'the-node-id'
-        @database.intervals.insert record, (error, @record) =>
+        @database.soldiers.insert record, (error, @record) =>
           done error
 
       beforeEach (done) ->
@@ -386,7 +386,7 @@ describe 'Worker (Interval)', ->
         return # redis fix
 
       it 'should have the correct processAt time', (done) ->
-        @database.intervals.findOne { _id: @record._id }, (error, updatedRecord) =>
+        @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
           expect(updatedRecord.processAt).to.equal 1478035140 + (60 * 2)
           expect(updatedRecord.processing).to.be.false

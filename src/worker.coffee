@@ -25,7 +25,7 @@ class Worker
           callback error
 
   do: (callback) =>
-    @paulRevere.findAndDeployMilitia(callback)
+    @paulRevere.findAndDeploySoldier(callback)
     return # avoid returning promise
 
   run: (callback) =>
