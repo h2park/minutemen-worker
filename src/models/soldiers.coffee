@@ -1,4 +1,5 @@
-debug      = require('debug')('minute-man-worker:soldiers')
+{ ObjectId } = require 'mongojs'
+debug        = require('debug')('minute-man-worker:soldiers')
 
 class Soldiers
   constructor: ({ database }) ->
@@ -23,8 +24,8 @@ class Soldiers
       debug 'no record found' unless record?
       callback null, record
 
-  update: ({ _id, nextProcessAt, processAt }, callback) =>
-    query  = { _id: _id }
+  update: ({ recordId, nextProcessAt, processAt }, callback) =>
+    query  = { _id: new ObjectId(recordId) }
     update = {
       'metadata.processing': false
       'metadata.processAt': nextProcessAt
@@ -33,8 +34,8 @@ class Soldiers
     debug 'updating solider', { query, update }
     @collection.update query, { $set: update }, callback
 
-  remove: ({ _id }, callback) =>
-    debug 'removing solider', { _id }
-    @collection.remove { _id: _id }, callback
+  remove: ({ recordId }, callback) =>
+    debug 'removing solider', { recordId }
+    @collection.remove { _id: new ObjectId(recordId) }, callback
 
 module.exports = Soldiers

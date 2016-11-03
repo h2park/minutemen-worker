@@ -1,4 +1,3 @@
-_             = require 'lodash'
 async         = require 'async'
 Soldiers      = require '../models/soldiers'
 TimeRange     = require '../models/time-range'
@@ -24,24 +23,23 @@ class PaulRevere
 
   _processSoldier: ({ record, timeRange }, callback) =>
     debug 'process solider', { record }
-    { _id, metadata, data } = record
-    { intervalTime, cronString, fireOnce, processAt } = metadata
+    { metadata, data } = record
+    { intervalTime, cronString, processAt } = metadata
+    recordId = record._id
     timeGenerator = new TimeGenerator { timeRange, intervalTime, processAt, cronString }
     secondsList = timeGenerator.getCurrentSeconds()
-    @_deploySoldier { secondsList, data, fireOnce }, (error) =>
+    @_deploySoldier { secondsList, recordId }, (error) =>
       return callback(error) if error?
-      return @soldiers.remove { _id }, callback if fireOnce
       nextProcessAt = timeGenerator.getNextSecond()
-      @soldiers.update { _id, nextProcessAt, processAt }, callback
+      @soldiers.update { recordId, nextProcessAt, processAt }, callback
 
-  _deploySoldier: ({ secondsList, data, fireOnce }, callback) =>
-    secondsList = [_.first(secondsList)] if fireOnce
-    debug 'deploy solider', secondsList, { fireOnce }
-    async.eachSeries secondsList, async.apply(@_pushSecond, data), callback
+  _deploySoldier: ({ secondsList, recordId }, callback) =>
+    debug 'deploy solider', secondsList, recordId
+    async.eachSeries secondsList, async.apply(@_pushSecond, recordId), callback
 
-  _pushSecond: (data, queue, callback) =>
-    debug 'lpushing', { queue, data }
-    @client.lpush "#{@queueName}:#{queue}", JSON.stringify(data), callback
+  _pushSecond: (recordId, queue, callback) =>
+    debug 'lpushing', { queue, recordId }
+    @client.lpush "#{@queueName}:#{queue}", recordId, callback
     return # redis fix
 
   _getTimeRange: (callback) =>

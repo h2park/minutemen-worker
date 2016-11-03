@@ -33,5 +33,5 @@ describe 'TimeRange', ->
         expect(@sut.offset()).to.equal 60
 
     describe '->sampleSize', ->
-      it 'should be set to 120 seconds', ->
-        expect(@sut.sampleSize()).to.equal 120
+      it 'should be set to 61 seconds', ->
+        expect(@sut.sampleSize()).to.equal 61

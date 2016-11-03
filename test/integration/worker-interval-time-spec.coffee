@@ -35,10 +35,10 @@ describe 'Worker (Interval)', ->
         record =
           metadata:
             intervalTime: 1000
-            fireOnce: false
             processAt: 1478035140
           data:
             nonce: uuid.v1()
+            fireOnce: false
             uuid: 'the-uuid'
             token: 'the-token'
             sendTo: 'the-sendTo-uuid'
@@ -55,7 +55,7 @@ describe 'Worker (Interval)', ->
           secondWindow = 1478035140 + n
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
@@ -73,8 +73,8 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035140
             intervalTime: 10000
-            fireOnce: false
           data:
+            fireOnce: false
             nonce: uuid.v1()
             uuid: 'the-uuid'
             token: 'the-token'
@@ -92,7 +92,7 @@ describe 'Worker (Interval)', ->
           secondWindow = 1478035140 + (n * 10)
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
@@ -109,8 +109,8 @@ describe 'Worker (Interval)', ->
         record =
           metadata:
             intervalTime: 10000
-            fireOnce: false
           data:
+            fireOnce: false
             nonce: uuid.v1()
             uuid: 'the-uuid'
             token: 'the-token'
@@ -128,7 +128,7 @@ describe 'Worker (Interval)', ->
           secondWindow = 1478035140 + (n * 10)
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
@@ -146,8 +146,8 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035140
             intervalTime: 10000
-            fireOnce: true
           data:
+            fireOnce: true
             nonce: uuid.v1()
             uuid: 'the-uuid'
             token: 'the-token'
@@ -164,22 +164,22 @@ describe 'Worker (Interval)', ->
         secondWindow = 1478035140
         @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
           return done error if error?
-          expect(result).to.exist
+          expect(result[1]).to.equal @record._id.toString()
           done()
         return # redis fix
 
-      it 'should not create the next one', (done) ->
+      it 'should create the next one', (done) ->
         secondWindow = 1478035140 + 10
-        @client.llen "#{@queueName}:#{secondWindow}", (error, count) =>
+        @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
           return done error if error?
-          expect(count).to.equal 0
+          expect(result[1]).to.equal @record._id.toString()
           done()
         return # redis fix
 
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord).to.not.exist
+          expect(updatedRecord).to.exist
           done()
 
     describe 'when the intervalTime is 30 seconds and it is set to processing', ->
@@ -188,9 +188,9 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035140
             intervalTime: 30 * 1000
-            fireOnce: false
             processing: true
           data:
+            fireOnce: false
             nonce: uuid.v1()
             uuid: 'the-uuid'
             token: 'the-token'
@@ -226,9 +226,9 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035141
             intervalTime: 30 * 1000
-            fireOnce: false
           data:
             nonce: uuid.v1()
+            fireOnce: false
             uuid: 'the-uuid'
             token: 'the-token'
             sendTo: 'the-sendTo-uuid'
@@ -242,9 +242,9 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035140
             intervalTime: 30 * 1000
-            fireOnce: false
           data:
             nonce: uuid.v1()
+            fireOnce: false
             uuid: 'the-uuid'
             token: 'the-token'
             sendTo: 'the-sendTo-uuid'
@@ -261,10 +261,7 @@ describe 'Worker (Interval)', ->
           secondWindow = 1478035140 + (n * 30)
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            expect(result).to.exist
-            [_, data] = result
-            record = JSON.parse data
-            expect(record.nonce).to.equal @recordOne.data.nonce
+            expect(result[1]).to.equal @recordOne._id.toString()
             next()
           return # redis fix
         , done
@@ -287,10 +284,10 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035141
             intervalTime: 30 * 1000
-            fireOnce: false
             processing: true
           data:
             nonce: uuid.v1()
+            fireOnce: false
             uuid: 'the-uuid'
             token: 'the-token'
             sendTo: 'the-sendTo-uuid'
@@ -304,11 +301,11 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035140
             intervalTime: 30 * 1000
-            fireOnce: false
           data:
             nonce: uuid.v1()
             uuid: 'the-uuid'
             token: 'the-token'
+            fireOnce: false
             sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
             transactionId: 'the-transaction-id'
@@ -323,10 +320,7 @@ describe 'Worker (Interval)', ->
           secondWindow = 1478035140 + (n * 30)
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            expect(result).to.exist
-            [_, data] = result
-            record = JSON.parse data
-            expect(record.nonce).to.equal @recordOne.data.nonce
+            expect(result[1]).to.equal @recordOne._id.toString()
             next()
           return # redis fix
         , done
@@ -368,7 +362,7 @@ describe 'Worker (Interval)', ->
           secondWindow = 1478035140 + n
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
@@ -386,9 +380,9 @@ describe 'Worker (Interval)', ->
           metadata:
             processAt: 1478035140
             intervalTime: 60 * 1000 * 2
-            fireOnce: false
           data:
             nonce: uuid.v1()
+            fireOnce: false
             uuid: 'the-uuid'
             token: 'the-token'
             sendTo: 'the-sendTo-uuid'
@@ -404,7 +398,7 @@ describe 'Worker (Interval)', ->
         secondWindow = 1478035140
         @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
           return done error if error?
-          expect(result).to.exist
+          expect(result[1]).to.equal @record._id.toString()
           done()
         return # redis fix
 

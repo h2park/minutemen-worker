@@ -34,7 +34,6 @@ describe 'Worker (CronString)', ->
         record =
           metadata:
             cronString: '* * * * * *'
-            fireOnce: false
           data:
             nonce: uuid.v1()
             uuid: 'the-uuid'
@@ -42,6 +41,7 @@ describe 'Worker (CronString)', ->
             sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
             transactionId: 'the-transaction-id'
+            fireOnce: false
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -54,7 +54,7 @@ describe 'Worker (CronString)', ->
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
             console.log { secondWindow } unless result?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
@@ -72,7 +72,6 @@ describe 'Worker (CronString)', ->
           metadata:
             processAt: 1478041581
             cronString: '* * * * * *'
-            fireOnce: false
           data:
             nonce: uuid.v1()
             uuid: 'the-uuid'
@@ -80,6 +79,7 @@ describe 'Worker (CronString)', ->
             sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
             transactionId: 'the-transaction-id'
+            fireOnce: false
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -92,7 +92,7 @@ describe 'Worker (CronString)', ->
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
             console.log { secondWindow } unless result?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
@@ -110,7 +110,6 @@ describe 'Worker (CronString)', ->
           metadata:
             cronString: '*/15 * * * * *'
             processAt: 1478041581
-            fireOnce: false
           data:
             nonce: uuid.v1()
             uuid: 'the-uuid'
@@ -118,6 +117,7 @@ describe 'Worker (CronString)', ->
             sendTo: 'the-sendTo-uuid'
             nodeId: 'the-node-id'
             transactionId: 'the-transaction-id'
+            fireOnce: false
         @database.soldiers.insert record, (error, @record) =>
           done error
 
@@ -130,7 +130,7 @@ describe 'Worker (CronString)', ->
           @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
             return next error if error?
             console.log { secondWindow } unless result?
-            expect(result).to.exist
+            expect(result[1]).to.equal @record._id.toString()
             next()
           return # redis fix
         , done
