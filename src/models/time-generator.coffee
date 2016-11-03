@@ -2,11 +2,11 @@ _          = require 'lodash'
 cronParser = require 'cron-parser'
 moment     = require 'moment'
 TimeRange  = require './time-range'
-debug      = require('debug')('minute-man-worker:time-parser')
+debug      = require('debug')('minute-man-worker:time-generator')
 
-class TimeParser
+class TimeGenerator
   constructor: ({ @timeRange, @cronString, intervalTime, @processAt }) ->
-    throw new Error 'TimeParser: requires timeRange' unless @timeRange?
+    throw new Error 'TimeGenerator: requires timeRange' unless @timeRange?
     @processAt ?= @timeRange.current().unix()
     @intervalSeconds = @_intervalTimeToSeconds(intervalTime) if intervalTime?
     @secondsList = @getSecondsList()
@@ -72,4 +72,4 @@ class TimeParser
   _getNextTimeFromCronParser: (parser) =>
     return moment(parser.next()?.toDate().valueOf())
 
-module.exports = TimeParser
+module.exports = TimeGenerator

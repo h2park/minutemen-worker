@@ -1,11 +1,11 @@
 _       = require 'lodash'
-Worker  = require '../src/worker'
 Redis   = require 'ioredis'
 RedisNS = require '@octoblu/redis-ns'
 mongojs = require 'mongojs'
 moment  = require 'moment'
 uuid    = require 'uuid'
 async   = require 'async'
+Worker  = require '../../src/worker'
 
 describe 'Worker (Interval)', ->
   beforeEach (done) ->

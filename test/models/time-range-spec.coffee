@@ -1,6 +1,6 @@
-_          = require 'lodash'
-TimeRange = require '../src/time-range'
-moment     = require 'moment'
+_         = require 'lodash'
+TimeRange = require '../../src/models/time-range'
+moment    = require 'moment'
 
 describe 'TimeRange', ->
   describe 'no timestamp', ->

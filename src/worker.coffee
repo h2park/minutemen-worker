@@ -1,5 +1,5 @@
 async      = require 'async'
-PaulRevere = require './paul-revere'
+PaulRevere = require './controllers/paul-revere'
 
 class Worker
   constructor: (options={})->

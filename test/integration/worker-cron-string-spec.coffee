@@ -1,5 +1,5 @@
 _       = require 'lodash'
-Worker  = require '../src/worker'
+Worker  = require '../../src/worker'
 Redis   = require 'ioredis'
 RedisNS = require '@octoblu/redis-ns'
 mongojs = require 'mongojs'

@@ -1,9 +1,9 @@
-_          = require 'lodash'
-async      = require 'async'
-TimeParser = require './time-parser'
-TimeRange  = require './time-range'
-Soldiers   = require './soldiers'
-debug      = require('debug')('minute-man-worker:paul-revere')
+_             = require 'lodash'
+async         = require 'async'
+Soldiers      = require '../models/soldiers'
+TimeRange     = require '../models/time-range'
+TimeGenerator = require '../models/time-generator'
+debug         = require('debug')('minute-man-worker:paul-revere')
 
 class PaulRevere
   constructor: ({ database, @client, @queueName, @timestamp }) ->
@@ -26,12 +26,12 @@ class PaulRevere
     debug 'process solider', { record }
     { _id, metadata, data } = record
     { intervalTime, cronString, fireOnce, processAt } = metadata
-    timeParser = new TimeParser { timeRange, intervalTime, processAt, cronString }
-    secondsList = timeParser.getCurrentSeconds()
+    timeGenerator = new TimeGenerator { timeRange, intervalTime, processAt, cronString }
+    secondsList = timeGenerator.getCurrentSeconds()
     @_deploySoldier { secondsList, data, fireOnce }, (error) =>
       return callback(error) if error?
       return @soldiers.remove { _id }, callback if fireOnce
-      nextProcessAt = timeParser.getNextSecond()
+      nextProcessAt = timeGenerator.getNextSecond()
       @soldiers.update { _id, nextProcessAt, processAt }, callback
 
   _deploySoldier: ({ secondsList, data, fireOnce }, callback) =>
