@@ -100,7 +100,8 @@ class Command
       return callback error if error?
 
       setInterval =>
-        database.runCommand {ping: 1}, @die
+        database.runCommand {ping: 1}, (error) =>
+          @die error if error?
       , (10 * 1000)
 
       callback null, database

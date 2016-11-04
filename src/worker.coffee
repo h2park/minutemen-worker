@@ -9,7 +9,7 @@ class Worker
     throw new Error('Worker: requires queueName') unless queueName?
     throw new Error('Worker: requires database') unless database?
     @shouldStop = false
-    @isStopped = false
+    @isStopped  = false
     @paulRevere = new PaulRevere {
       database,
       client,
@@ -21,9 +21,8 @@ class Worker
     # give some time for garbage collection
     process.nextTick =>
       @do (error) =>
-        setTimeout =>
+        process.nextTick =>
           callback error
-        , 1000
 
   do: (callback) =>
     @paulRevere.findAndDeploySoldier(callback)
@@ -43,7 +42,7 @@ class Worker
     , 5000
 
     interval = setInterval =>
-      return unless @isStopped
+      return unless @isStopped?
       clearInterval interval
       clearTimeout timeout
       callback()

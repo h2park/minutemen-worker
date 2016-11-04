@@ -30,7 +30,7 @@ describe 'Worker (Interval)', ->
     @sut.stop done
 
   describe '->do', ->
-    describe 'when the intervalTime is 1 second', ->
+    describe.only 'when the intervalTime is 1 second', ->
       beforeEach (done) ->
         record =
           metadata:
@@ -66,6 +66,27 @@ describe 'Worker (Interval)', ->
           expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.metadata.processing).to.be.false
           done()
+
+      describe 'when it do is called again', ->
+        beforeEach (done) ->
+          @sut.do done
+
+        it 'should not create for each second in the seconds queue', (done) ->
+          async.timesSeries 60, (n, next) =>
+            secondWindow = 1478035140 + n
+            @client.llen "#{@queueName}:#{secondWindow}", (error, count) =>
+              return next error if error?
+              expect(count).to.equal 0
+              next()
+            return # redis fix
+          , done
+
+        it 'should have the correct processAt time', (done) ->
+          @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
+            return done error if error?
+            expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+            expect(updatedRecord.metadata.processing).to.be.false
+            done()
 
     describe 'when the intervalTime is 10 seconds', ->
       beforeEach (done) ->

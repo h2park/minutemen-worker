@@ -14,4 +14,4 @@ RUN yarn install
 
 COPY . /usr/src/app
 
-CMD [ "node", "command.js" ]
+CMD [ "node", "--max_old_space_size=256", "command.js" ]
