@@ -14,18 +14,17 @@ describe 'TimeRange', ->
       @sut = new TimeRange { timestamp: 1478033340 }
 
     describe '->current', ->
-      it 'should be set to the next minute', ->
-        nextMinute = moment.unix(1478033340).add(1, 'minute')
-        expect(@sut.current().valueOf()).to.equal nextMinute.valueOf()
+      it 'should be set the current time', ->
+        expect(@sut.current().valueOf()).to.equal moment.unix(1478033340).valueOf()
 
     describe '->max', ->
       it 'should be set to the next minute after the currentTime', ->
-        maxMinute = moment.unix(1478033340).add(2, 'minute')
+        maxMinute = moment.unix(1478033340).add(1, 'minute')
         expect(@sut.max().valueOf()).to.equal maxMinute.valueOf()
 
     describe '->min', ->
       it 'should be set to the same minute as the currentTime', ->
-        minMinute = moment.unix(1478033340).add(1, 'minute')
+        minMinute = moment.unix(1478033340)
         expect(@sut.min().valueOf()).to.equal minMinute.valueOf()
 
     describe '->offset', ->

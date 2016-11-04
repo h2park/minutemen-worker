@@ -11,7 +11,7 @@ describe 'TimeGenerator', ->
       ).to.throw
 
   beforeEach ->
-    @timeRange = new TimeRange { timestamp: 1478033340 }
+    @timeRange = new TimeRange { timestamp: 1478033400 }
 
   describe '->getCurrentSeconds', ->
     describe 'when using intervalTime', ->

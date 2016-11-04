@@ -24,7 +24,7 @@ describe 'Worker (Interval)', ->
 
   beforeEach ->
     @currentTime = moment()
-    @sut = new Worker { @database, @client, @queueName, timestamp: 1478035080 }
+    @sut = new Worker { @database, @client, @queueName, timestamp: 1478035140 }
 
   afterEach (done) ->
     @sut.stop done

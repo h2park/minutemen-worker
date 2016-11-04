@@ -23,7 +23,7 @@ describe 'Worker (CronString)', ->
       done()
 
   beforeEach ->
-    @sut = new Worker { @database, @client, @queueName, timestamp: 1478041516 }
+    @sut = new Worker { @database, @client, @queueName, timestamp: 1478041576 }
 
   afterEach (done) ->
     @sut.stop done

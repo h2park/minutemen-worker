@@ -14,7 +14,7 @@ class TimeRange
     return @_offsetSeconds
 
   current: =>
-    return @_addOffset(@timestamp)
+    return moment.unix(@timestamp)
 
   max: =>
     return @_addOffset(@current().unix())
