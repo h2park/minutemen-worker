@@ -62,7 +62,7 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60
+          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60 + 1
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 
@@ -100,7 +100,7 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60
+          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60 + 1
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 

@@ -30,7 +30,7 @@ describe 'Worker (Interval)', ->
     @sut.stop done
 
   describe '->do', ->
-    describe.only 'when the intervalTime is 1 second', ->
+    describe 'when the intervalTime is 1 second', ->
       beforeEach (done) ->
         record =
           metadata:
@@ -63,7 +63,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 1
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 
@@ -71,20 +71,10 @@ describe 'Worker (Interval)', ->
         beforeEach (done) ->
           @sut.do done
 
-        it 'should not create for each second in the seconds queue', (done) ->
-          async.timesSeries 60, (n, next) =>
-            secondWindow = 1478035140 + n
-            @client.llen "#{@queueName}:#{secondWindow}", (error, count) =>
-              return next error if error?
-              expect(count).to.equal 0
-              next()
-            return # redis fix
-          , done
-
         it 'should have the correct processAt time', (done) ->
           @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
             return done error if error?
-            expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+            expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 1
             expect(updatedRecord.metadata.processing).to.be.false
             done()
 
@@ -121,7 +111,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 10
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 
@@ -157,7 +147,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 10
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 
@@ -290,7 +280,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time on recordOne', (done) ->
         @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035200
+          expect(updatedRecord.metadata.processAt).to.equal 1478035200 + 30
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
@@ -349,7 +339,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time on recordOne', (done) ->
         @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035200
+          expect(updatedRecord.metadata.processAt).to.equal 1478035200 + 30
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
@@ -391,7 +381,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 1
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 

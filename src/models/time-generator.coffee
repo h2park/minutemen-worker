@@ -26,7 +26,7 @@ class TimeGenerator
   getNextSecond: =>
     max = @timeRange.max().unix()
     return _.find @secondsList, (time) =>
-      return time >= max
+      return time > max
 
   getSecondsList: =>
     debug 'getSecondsList', { @intervalSeconds, @cronString, @processAt }

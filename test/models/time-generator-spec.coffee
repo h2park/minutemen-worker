@@ -21,8 +21,8 @@ describe 'TimeGenerator', ->
             @sut = new TimeGenerator { @timeRange, intervalTime: 1000, processAt: 1478033400 }
 
           it 'should have all 60 seconds in the list', ->
-            _.times 60, (n) =>
-              expect(@sut.getCurrentSeconds()).to.include 1478033400 + n
+            seconds = _.times 60, (n) => 1478033400 + n
+            expect(@sut.getCurrentSeconds()).to.deep.equal seconds
 
         describe 'when the processAt is 5 seconds in the future', ->
           beforeEach ->
@@ -133,7 +133,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 1
 
       describe 'when set to 2 second', ->
         beforeEach ->
@@ -143,7 +143,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 2
 
       describe 'when set to 30 second', ->
         beforeEach ->
@@ -153,7 +153,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 30
 
       describe 'when set to 1 minute', ->
         beforeEach ->
@@ -163,7 +163,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal @currentProcessAt.unix()
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 60
 
       describe 'when set to 10 minute', ->
         beforeEach ->
@@ -186,7 +186,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal 1478033400
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 1
 
       describe 'when set to 2 second', ->
         beforeEach ->
@@ -195,7 +195,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal 1478033400
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 2
 
       describe 'when set to 30 second', ->
         beforeEach ->
@@ -204,7 +204,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal 1478033400
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 30
 
       describe 'when set to 1 minute', ->
         beforeEach ->
@@ -213,7 +213,7 @@ describe 'TimeGenerator', ->
 
         it 'should have the correct nextProcessAt', ->
           expect(@nextProcessAt).to.not.equal 1478033400
-          expect(@nextProcessAt).to.equal 1478033460
+          expect(@nextProcessAt).to.equal 1478033460 + 60
 
       describe 'when set to 10 minute', ->
         beforeEach ->
