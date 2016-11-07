@@ -3,6 +3,7 @@ Soldiers      = require '../models/soldiers'
 TimeRange     = require '../models/time-range'
 TimeGenerator = require '../models/time-generator'
 debug         = require('debug')('minute-man-worker:paul-revere')
+overview      = require('debug')('minute-man-worker:paul-revere:overview')
 
 class PaulRevere
   constructor: ({ database, @client, @queueName, @timestamp }) ->
@@ -35,6 +36,7 @@ class PaulRevere
 
   _deploySoldier: ({ secondsList, recordId }, callback) =>
     debug 'deploy solider', secondsList, recordId
+    overview "inserting #{secondsList.length} seconds for #{recordId}"
     async.eachSeries secondsList, async.apply(@_pushSecond, recordId), callback
 
   _pushSecond: (recordId, queue, callback) =>

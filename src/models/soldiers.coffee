@@ -1,5 +1,7 @@
+_            = require 'lodash'
 { ObjectId } = require 'mongojs'
 debug        = require('debug')('minute-man-worker:soldiers')
+overview     = require('debug')('minute-man-worker:soldiers:overview')
 
 class Soldiers
   constructor: ({ database }) ->
@@ -8,10 +10,7 @@ class Soldiers
   get: ({ min, max }, callback) =>
     query = {
       'metadata.processing': { $ne: true }
-      $or: [
-        { 'metadata.processAt': { $lt: max } }
-        { 'metadata.processAt': $exists: false }
-      ]
+      'metadata.processAt': { $lt: max }
     }
     update = { 'metadata.processing': true }
     sort = { 'metadata.processAt': 1 }
@@ -20,7 +19,7 @@ class Soldiers
     debug 'get.sort', sort
     @collection.findAndModify { query, update: { $set: update }, sort }, (error, record) =>
       return callback error if error?
-      debug 'found record', record if record?
+      overview 'found record' if record?
       debug 'no record found' unless record?
       callback null, record
 
@@ -31,11 +30,11 @@ class Soldiers
       'metadata.processAt': nextProcessAt
       'metadata.lastProcessAt': processAt
     }
-    debug 'updating solider', { query, update }
+    overview 'updating solider', { query, update }
     @collection.update query, { $set: update }, callback
 
   remove: ({ recordId }, callback) =>
-    debug 'removing solider', { recordId }
+    overview 'removing solider', { recordId }
     @collection.remove { _id: new ObjectId(recordId) }, callback
 
 module.exports = Soldiers
