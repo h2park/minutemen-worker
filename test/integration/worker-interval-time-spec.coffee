@@ -63,7 +63,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 1
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 
@@ -74,7 +74,7 @@ describe 'Worker (Interval)', ->
         it 'should have the correct processAt time', (done) ->
           @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
             return done error if error?
-            expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 1
+            expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
             expect(updatedRecord.metadata.processing).to.be.false
             done()
 
@@ -111,7 +111,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 10
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 
@@ -280,7 +280,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time on recordOne', (done) ->
         @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035200 + 30
+          expect(updatedRecord.metadata.processAt).to.equal 1478035200
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
@@ -339,7 +339,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time on recordOne', (done) ->
         @database.soldiers.findOne { _id: @recordOne._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035200 + 30
+          expect(updatedRecord.metadata.processAt).to.equal 1478035200
           done()
 
       it 'should have the correct processAt time on recordTwo', (done) ->
@@ -381,7 +381,7 @@ describe 'Worker (Interval)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60 + 1
+          expect(updatedRecord.metadata.processAt).to.equal 1478035140 + 60
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 

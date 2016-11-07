@@ -1,10 +1,12 @@
-_          = require 'lodash'
-moment     = require 'moment'
-debug      = require('debug')('minute-man-worker:time-generator')
+_        = require 'lodash'
+moment   = require 'moment'
+debug    = require('debug')('minute-man-worker:time-generator')
+overview = require('debug')('minute-man-worker:time-generator:overview')
 
 class TimeRange
   constructor: ({ @timestamp }) ->
     throw new Error 'TimeGenerator: requires timestamp' unless @timestamp?
+    timestamp = _.parseInt @timestamp
     @_offsetSeconds = 60
     debug 'currentTime', @current().unix()
     debug 'max', @max().unix()

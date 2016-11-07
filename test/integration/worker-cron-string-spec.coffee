@@ -29,7 +29,7 @@ describe 'Worker (CronString)', ->
     @sut.stop done
 
   describe '->do', ->
-    describe 'when an cronString that runs once every 10 seconds and has no processAt', ->
+    describe 'when an cronString that runs once every seconds and has no processAt', ->
       beforeEach (done) ->
         record =
           metadata:
@@ -48,8 +48,8 @@ describe 'Worker (CronString)', ->
       beforeEach (done) ->
         @sut.do done
 
-      it 'should create 6 in the seconds queue', (done) ->
-        async.timesSeries 6, (n, next) =>
+      it 'should create 55 in the seconds queue', (done) ->
+        async.timesSeries 55, (n, next) =>
           secondWindow = 1478041576 + n
           @client.llen "#{@queueName}:#{secondWindow}", (error, count) =>
             return next error if error?
@@ -99,7 +99,8 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60 + 1
+          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60
+          expect(updatedRecord.metadata.lastProcessAt).to.equal 1478041581
           expect(updatedRecord.metadata.processing).to.be.false
           done()
 

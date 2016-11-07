@@ -9,24 +9,20 @@ class TimeGenerator
     throw new Error 'TimeGenerator: requires timeRange' unless @timeRange?
     @processAt ?= @timeRange.current().unix()
     @intervalSeconds = @_intervalTimeToSeconds(intervalTime) if intervalTime?
-    @secondsList = @getSecondsList()
+    @secondsList = _.sortedUniq @getSecondsList()
     debug 'secondsList', @secondsList
-
-  getMinRangeTimeFromProcessAt: =>
-    return @timeRange.min() if @processAt < @timeRange.min().unix()
-    return @timeRange.max() if @processAt > @timeRange.max().unix()
-    return moment.unix(@processAt)
 
   getCurrentSeconds: =>
     max = @timeRange.max().unix()
-    min = @getMinRangeTimeFromProcessAt().unix()
+    min = @processAt
     return _.filter @secondsList, (time) =>
+      # console.log time, min, max
       return time >= min and time < max
 
   getNextSecond: =>
     max = @timeRange.max().unix()
     return _.find @secondsList, (time) =>
-      return time > max
+      return time >= max
 
   getSecondsList: =>
     debug 'getSecondsList', { @intervalSeconds, @cronString, @processAt }

@@ -4,7 +4,7 @@ PaulRevere = require './controllers/paul-revere'
 class Worker
   constructor: (options={})->
     { client, queueName, database } = options
-    { timestamp } = options
+    { @timestamp } = options
     throw new Error('Worker: requires client') unless client?
     throw new Error('Worker: requires queueName') unless queueName?
     throw new Error('Worker: requires database') unless database?
@@ -14,7 +14,6 @@ class Worker
       database,
       client,
       queueName,
-      timestamp,
     }
 
   doWithNextTick: (callback) =>
@@ -25,7 +24,10 @@ class Worker
           callback error
 
   do: (callback) =>
-    @paulRevere.findAndDeploySoldier(callback)
+    return @paulRevere.findAndDeploySoldier @timestamp, callback if @timestamp?
+    @paulRevere.getTime (error, timestamp) =>
+      return callback error if error?
+      @paulRevere.findAndDeploySoldier timestamp, callback
     return # avoid returning promise
 
   run: (callback) =>

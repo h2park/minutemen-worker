@@ -7,10 +7,13 @@ class Soldiers
   constructor: ({ database }) ->
     @collection = database.collection 'soldiers'
 
-  get: ({ min, max }, callback) =>
+  get: ({ max, min }, callback) =>
     query = {
       'metadata.processing': { $ne: true }
-      'metadata.processAt': { $lt: max }
+      'metadata.processAt': {
+        $lte: max,
+        $gte: min
+      }
     }
     update = { 'metadata.processing': true }
     sort = { 'metadata.processAt': 1 }
