@@ -14,7 +14,7 @@ class TimeGenerator
 
   getCurrentSeconds: =>
     max = @timeRange.max().unix()
-    min = @processAt
+    min = @processAt - 60
     return _.filter @secondsList, (time) =>
       # console.log time, min, max
       return time >= min and time < max
@@ -22,7 +22,7 @@ class TimeGenerator
   getNextSecond: =>
     max = @timeRange.max().unix()
     return _.find @secondsList, (time) =>
-      return time >= max
+      return time >= ( max + 60 )
 
   getSecondsList: =>
     debug 'getSecondsList', { @intervalSeconds, @cronString, @processAt }

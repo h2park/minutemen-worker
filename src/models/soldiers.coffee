@@ -8,11 +8,12 @@ class Soldiers
     @collection = database.collection 'soldiers'
 
   get: ({ max, min }, callback) =>
+    debug { max, min }
     query = {
       'metadata.processing': { $ne: true }
       'metadata.processAt': {
         $lte: max,
-        $gte: min
+        $gte: min,
       }
     }
     update = { 'metadata.processing': true }
@@ -22,6 +23,7 @@ class Soldiers
     debug 'get.sort', sort
     @collection.findAndModify { query, update: { $set: update }, sort }, (error, record) =>
       return callback error if error?
+      debug 'found processAt', record?.metadata?.processAt
       overview 'found record' if record?
       debug 'no record found' unless record?
       callback null, record
@@ -34,6 +36,7 @@ class Soldiers
       'metadata.lastProcessAt': processAt
     }
     overview 'updating solider', { query, update }
+    debug 'setting processAt', nextProcessAt
     @collection.update query, { $set: update }, callback
 
   remove: ({ recordId }, callback) =>

@@ -28,7 +28,7 @@ class PaulRevere
     min = timeRange.min().unix()
     @soldiers.get { max, min }, (error, record) =>
       return callback(error) if error?
-      return callback() unless record?
+      return callback(@_createNotFoundError()) unless record?
       @_processSoldier { record, timeRange }, callback
 
   _processSoldier: ({ record, timeRange }, callback) =>
@@ -52,9 +52,15 @@ class PaulRevere
     overview "inserting #{secondsList.length} seconds for #{recordId}"
     async.eachSeries secondsList, async.apply(@_pushSecond, recordId), callback
 
-  _pushSecond: (recordId, queue, callback) =>
-    debug 'lpushing', { queue, recordId }
-    @client.lpush "#{@queueName}:#{queue}", recordId, callback
+  _pushSecond: (recordId, timestamp, callback) =>
+    debug 'lpushing', { timestamp, recordId }
+    data = {recordId,timestamp}
+    @client.lpush "#{@queueName}:#{timestamp}", JSON.stringify(data), callback
     return # redis fix
+
+  _createNotFoundError: =>
+    error = new Error 'Not Found'
+    error.code = 404
+    return error
 
 module.exports = PaulRevere

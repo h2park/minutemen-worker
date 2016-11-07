@@ -27,7 +27,9 @@ class Worker
     return @paulRevere.findAndDeploySoldier @timestamp, callback if @timestamp?
     @paulRevere.getTime (error, timestamp) =>
       return callback error if error?
-      @paulRevere.findAndDeploySoldier timestamp, callback
+      @paulRevere.findAndDeploySoldier timestamp, (error) =>
+        return callback error if error? and error?.code != 404
+        return callback null
     return # avoid returning promise
 
   run: (callback) =>

@@ -25,7 +25,7 @@ class TimeRange
     return @current()
 
   sampleSize: =>
-    return @offset() * 2
+    return @offset() * 3
 
   _addOffset: (timestamp) =>
     return moment.unix(timestamp).add(@offset(), 'seconds')
