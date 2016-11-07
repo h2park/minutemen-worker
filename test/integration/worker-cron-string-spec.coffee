@@ -51,10 +51,9 @@ describe 'Worker (CronString)', ->
       it 'should create 6 in the seconds queue', (done) ->
         async.timesSeries 6, (n, next) =>
           secondWindow = 1478041576 + n
-          @client.brpop "#{@queueName}:#{secondWindow}", 1, (error, result) =>
+          @client.llen "#{@queueName}:#{secondWindow}", (error, count) =>
             return next error if error?
-            console.log { secondWindow } unless result?
-            expect(result[1]).to.equal @record._id.toString()
+            expect(count).to.equal 0
             next()
           return # redis fix
         , done
@@ -62,8 +61,8 @@ describe 'Worker (CronString)', ->
       it 'should have the correct processAt time', (done) ->
         @database.soldiers.findOne { _id: @record._id }, (error, updatedRecord) =>
           return done error if error?
-          expect(updatedRecord.metadata.processAt).to.equal 1478041576 + 60 + 1
-          expect(updatedRecord.metadata.processing).to.be.false
+          expect(updatedRecord.metadata.processAt).to.not.exist
+          expect(updatedRecord.metadata.processing).to.not.exist
           done()
 
     describe 'when an cronString that runs every second exists', ->
