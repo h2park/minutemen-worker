@@ -9,7 +9,7 @@ class Soldiers
     query = {
       'metadata.processing': { $ne: true }
       $or: [
-        { 'metadata.processAt': { $gte: min, $lt: max } }
+        { 'metadata.processAt': { $lt: max } }
         { 'metadata.processAt': $exists: false }
       ]
     }
