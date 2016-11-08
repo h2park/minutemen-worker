@@ -12,8 +12,17 @@ class Soldiers
     query = {
       'metadata.processing': { $ne: true }
       'metadata.processAt': {
-        $lte: max,
+        $lte: max
       }
+      # '$or': [
+      #   { 'metadata.processNow': true }
+      #   {
+      #     'metadata.processAt': {
+      #       $lte: max,
+      #       $gte: min
+      #     }
+      #   }
+      # ]
     }
     update = { 'metadata.processing': true }
     sort = { 'metadata.processAt': 1 }
@@ -28,7 +37,7 @@ class Soldiers
       callback null, record
 
   update: ({ recordId, nextProcessAt, processAt }, callback) =>
-    query  = { _id: new ObjectId(recordId) }
+    query  = { _id: recordId }
     update = {
       'metadata.processing': false
       'metadata.processAt': nextProcessAt
@@ -41,6 +50,6 @@ class Soldiers
 
   remove: ({ recordId }, callback) =>
     overview 'removing solider', { recordId }
-    @collection.remove { _id: new ObjectId(recordId) }, callback
+    @collection.remove { _id: recordId }, callback
 
 module.exports = Soldiers

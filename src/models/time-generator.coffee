@@ -14,11 +14,11 @@ class TimeGenerator
 
   getCurrentSeconds: =>
     max = @timeRange.max().unix()
-    min = @processAt - 1 if @processNow
-    min = @processAt - 60 unless @processNow
+    min = @processAt
+    min = min - 60 unless @processNow
     return _.filter @secondsList, (time) =>
       # console.log time, min, max
-      return time >= min and time < max
+      return time > min and time < max
 
   getNextSecond: =>
     max = @timeRange.max().unix()
@@ -36,7 +36,6 @@ class TimeGenerator
 
   _getSecondsFromIntervalSeconds: =>
     debug 'intervalSeconds', @intervalSeconds
-    # return [ @timeRange.min().add(@intervalSeconds, 'seconds').unix() ] if @fireOnce
     startDate = @timeRange.min()
     debug 'interval startDate', startDate.unix()
     secondsList = []
@@ -47,7 +46,6 @@ class TimeGenerator
       secondWindow = startDate.unix()
       secondsList.push secondWindow
       return
-    #debug 'secondsList', secondsList
     return secondsList
 
   _getSecondsFromCronString: =>

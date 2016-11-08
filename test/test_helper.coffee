@@ -7,4 +7,5 @@ chai.use sinonChai
 chai.use chaiSubset
 
 global.expect = chai.expect
+global.assert = chai.assert
 global.sinon  = sinon
