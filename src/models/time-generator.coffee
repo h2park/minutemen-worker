@@ -5,7 +5,7 @@ TimeRange  = require './time-range'
 debug      = require('debug')('minute-man-worker:time-generator')
 
 class TimeGenerator
-  constructor: ({ @timeRange, @cronString, intervalTime, @processAt }) ->
+  constructor: ({ @timeRange, @cronString, intervalTime, @processAt, @processNow, @fireOnce }) ->
     throw new Error 'TimeGenerator: requires timeRange' unless @timeRange?
     @processAt ?= @timeRange.current().unix()
     @intervalSeconds = @_intervalTimeToSeconds(intervalTime) if intervalTime?
@@ -14,7 +14,8 @@ class TimeGenerator
 
   getCurrentSeconds: =>
     max = @timeRange.max().unix()
-    min = @processAt - 60
+    min = @processAt - 1 if @processNow
+    min = @processAt - 60 unless @processNow
     return _.filter @secondsList, (time) =>
       # console.log time, min, max
       return time >= min and time < max
@@ -35,12 +36,15 @@ class TimeGenerator
 
   _getSecondsFromIntervalSeconds: =>
     debug 'intervalSeconds', @intervalSeconds
+    # return [ @timeRange.min().add(@intervalSeconds, 'seconds').unix() ] if @fireOnce
     startDate = @timeRange.min()
     debug 'interval startDate', startDate.unix()
     secondsList = []
-    _.times @timeRange.sampleSize(), =>
-      secondWindow = startDate.unix()
+    iterations = 1
+    iterations = @timeRange.sampleSize() unless @fireOnce
+    _.times iterations, =>
       startDate.add(@intervalSeconds, 'seconds')
+      secondWindow = startDate.unix()
       secondsList.push secondWindow
       return
     #debug 'secondsList', secondsList
@@ -48,10 +52,13 @@ class TimeGenerator
 
   _getSecondsFromCronString: =>
     debug 'cronString', @cronString
+    return [ @timeRange.min().add(@intervalSeconds, 'seconds').unix() ] if @fireOnce
     startDate = @timeRange.min().subtract(1, 'second')
     debug 'cron startDate', startDate.unix()
     secondsList = []
-    _.times @timeRange.sampleSize(), =>
+    iterations = 1
+    iterations = @timeRange.sampleSize() unless @fireOnce
+    _.times iterations, =>
       secondWindow = @_calculateNextCronInterval { startDate }
       secondsList.push secondWindow
       startDate = moment.unix(secondWindow)

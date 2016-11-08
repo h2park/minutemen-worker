@@ -13,7 +13,6 @@ class Soldiers
       'metadata.processing': { $ne: true }
       'metadata.processAt': {
         $lte: max,
-        $gte: min,
       }
     }
     update = { 'metadata.processing': true }
@@ -34,6 +33,7 @@ class Soldiers
       'metadata.processing': false
       'metadata.processAt': nextProcessAt
       'metadata.lastProcessAt': processAt
+      'metadata.processNow': false
     }
     overview 'updating solider', { query, update }
     debug 'setting processAt', nextProcessAt

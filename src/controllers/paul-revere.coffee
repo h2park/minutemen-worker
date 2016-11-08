@@ -34,9 +34,10 @@ class PaulRevere
   _processSoldier: ({ record, timeRange }, callback) =>
     debug 'process solider', { record }
     { metadata, data } = record
-    { intervalTime, cronString, processAt } = metadata
+    { intervalTime, cronString, processAt, processNow } = metadata
+    { fireOnce } = data
     recordId = record._id
-    timeGenerator = new TimeGenerator { timeRange, intervalTime, processAt, cronString }
+    timeGenerator = new TimeGenerator { timeRange, intervalTime, processAt, cronString, processNow, fireOnce }
     secondsList = timeGenerator.getCurrentSeconds()
     @_deploySoldier { secondsList, recordId }, (error) =>
       return callback(error) if error?
