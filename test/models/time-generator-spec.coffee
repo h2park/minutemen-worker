@@ -3,7 +3,7 @@ TimeGenerator = require '../../src/models/time-generator'
 TimeRange     = require '../../src/models/time-range'
 moment        = require 'moment'
 
-describe.only 'TimeGenerator', ->
+describe 'TimeGenerator', ->
   describe 'no timeRange', ->
     it 'should throw an error', ->
       expect(() =>
@@ -81,10 +81,16 @@ describe.only 'TimeGenerator', ->
 
       describe 'when set to every 10 minutes and should be processed', ->
         beforeEach ->
+          # 147803300 = 'Sat Sep  7 09:28:20 MST 1974'
+          console.log {@timeRange, min: @timeRange.min().unix(), max: @timeRange.max().unix()}
           @sut = new TimeGenerator { @timeRange, intervalTime: (10 * 60 * 1000), processAt: 147803300, processNow: true }
+          @seconds = @sut.getSecondsList()
+          @nextProcessAt = @sut.getCurrentSeconds()
+          console.log {@seconds, @nextProcessAt}
 
+        # 1478033400 = 'Tue Nov  1 14:00:00 MST 2016'
         it 'should have second for the processAt', ->
-          expect(@sut.getCurrentSeconds()).to.deep.equal [1478033400]
+          expect(@nextProcessAt).to.deep.equal [1478033400]
 
     describe 'when using cron', ->
       describe 'when set every second', ->

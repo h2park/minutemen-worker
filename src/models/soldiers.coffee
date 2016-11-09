@@ -36,17 +36,27 @@ class Soldiers
       debug 'no record found' unless record?
       callback null, record
 
-  update: ({ recordId, nextProcessAt, processAt }, callback) =>
+  update: ({ recordId, nextProcessAt, processAt, timestamp }, callback) =>
     query  = { _id: recordId }
     update = {
-      'metadata.processing': false
-      'metadata.processAt': nextProcessAt
-      'metadata.lastProcessAt': processAt
-      'metadata.processNow': false
+      $set: {
+        'metadata.processing': false
+        'metadata.processAt': nextProcessAt
+        'metadata.lastProcessAt': processAt
+        'metadata.processNow': false
+      }
+      $addToSet: {
+        'metadata.lastRunAt': {
+          $each: [timestamp]
+          $slice: 5
+          $sort: 1
+        }
+      }
     }
+
     overview 'updating solider', { query, update }
     debug 'setting processAt', nextProcessAt
-    @collection.update query, { $set: update }, callback
+    @collection.update query, update, callback
 
   remove: ({ recordId }, callback) =>
     overview 'removing solider', { recordId }

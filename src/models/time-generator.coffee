@@ -16,9 +16,11 @@ class TimeGenerator
     max = @timeRange.max().unix()
     min = @processAt
     min = min - 60 unless @processNow
+    console.log {min,max}
     return _.filter @secondsList, (time) =>
-      # console.log time, min, max
-      return time > min and time < max
+      result = time > min and time < max
+      console.log  min, time, max, result
+      return result
 
   getNextSecond: =>
     max = @timeRange.max().unix()
@@ -51,7 +53,7 @@ class TimeGenerator
   _getSecondsFromCronString: =>
     debug 'cronString', @cronString
     return [ @timeRange.min().add(@intervalSeconds, 'seconds').unix() ] if @fireOnce
-    startDate = @timeRange.min().subtract(1, 'second')
+    startDate = @timeRange.min().subtract(1, 'second') # wut is this
     debug 'cron startDate', startDate.unix()
     secondsList = []
     iterations = 1

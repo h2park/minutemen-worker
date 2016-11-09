@@ -9,7 +9,7 @@ Soldier    = require '../helpers/soldier'
 Seconds    = require '../helpers/seconds'
 PaulRevere = require '../../src/controllers/paul-revere'
 
-describe 'Multiple Runs (Interval)', ->
+describe.only 'Multiple Runs (Interval)', ->
   beforeEach (done) ->
     @queueName = "seconds-#{uuid.v1()}"
     client = new Redis 'localhost', dropBufferSupport: true

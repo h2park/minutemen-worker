@@ -46,7 +46,8 @@ class PaulRevere
       overview 'min', timeRange.min().unix()
       overview 'max', timeRange.max().unix()
       overview 'current', timeRange.current().unix()
-      @soldiers.update { recordId, nextProcessAt, processAt }, callback
+      timestamp = timeRange.current().unix()
+      @soldiers.update { recordId, nextProcessAt, processAt, timestamp }, callback
 
   _deploySoldier: ({ secondsList, recordId }, callback) =>
     debug 'deploy solider', secondsList, recordId
