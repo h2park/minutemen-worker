@@ -9,7 +9,7 @@ Soldier    = require '../helpers/soldier'
 Seconds    = require '../helpers/seconds'
 PaulRevere = require '../../src/controllers/paul-revere'
 
-describe 'Multiple Runs (Interval)', ->
+describe 'Multiple Runs (Cron)', ->
   beforeEach (done) ->
     @queueName = "seconds-#{uuid.v1()}"
     client = new Redis 'localhost', dropBufferSupport: true
@@ -27,14 +27,14 @@ describe 'Multiple Runs (Interval)', ->
     @seconds = new Seconds { @client, @queueName }
     @sut     = new PaulRevere { @database, @client, @queueName }
 
-  describe 'when intervalTime is once a second', ->
+  describe 'when cronString is once a second', ->
     beforeEach (done) ->
       @sut.getTime (error, @currentTimestamp) =>
         @soldier = new Soldier { @database, @currentTimestamp }
         done error
 
     beforeEach (done) ->
-      @soldier.create {intervalTime: 1000}, done
+      @soldier.create {cronString: '* * * * * *'}, done
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
@@ -103,14 +103,14 @@ describe 'Multiple Runs (Interval)', ->
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()
 
-  describe 'when intervalTime is every other second', ->
+  describe 'when cronString is every other second', ->
     beforeEach (done) ->
       @sut.getTime (error, @currentTimestamp) =>
         @soldier = new Soldier { @database, @currentTimestamp }
         done error
 
     beforeEach (done) ->
-      @soldier.create {intervalTime: 2000}, done
+      @soldier.create {cronString: '*/30 * * * * *'}, done
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
@@ -136,7 +136,7 @@ describe 'Multiple Runs (Interval)', ->
           @soldier.get done
 
       it 'should create the correct seconds', (done) ->
-        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 2000 }, done
+        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000 }, done
 
       it 'should have an updated record', ->
         @soldier.checkUpdatedRecord()
@@ -155,7 +155,7 @@ describe 'Multiple Runs (Interval)', ->
         expect(@error.code).to.equal 404
 
       it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 2000 }, done
+        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000 }, done
 
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()
@@ -174,7 +174,7 @@ describe 'Multiple Runs (Interval)', ->
         expect(@error.code).to.equal 404
 
       it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime: 2000 }, done
+        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime:2000 }, done
 
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()

@@ -29,8 +29,8 @@ class Soldier
     pervProcessAt = moment.unix(@prevRecord.metadata.processAt)
     timeExpect.shouldBeGreaterThan 'processAt', processAt, processAt.add(2, 'minute')
     timeExpect.shouldEqual 'lastProcessAt', lastProcessAt, pervProcessAt
-    if @record.metadata.processing
-      assert.fail @record.metadata.processing, false, "processing should be set to false"
+    assert.toBeFalse @record.metadata.processing, "processing should be set to false"
+    assert.toBeFalse @record.metadata.processNow, "processNow should be set to false"
 
   checkSameRecord: =>
     return if _.isEqual @record, @prevRecord
