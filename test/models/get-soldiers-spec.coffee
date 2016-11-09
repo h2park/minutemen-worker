@@ -3,17 +3,16 @@ mongojs    = require 'mongojs'
 Soldiers   = require '../../src/models/soldiers'
 
 describe 'Get Soldiers', ->
-  beforeEach (done) ->
+  before (done) ->
     @database = mongojs 'minute-man-worker-test', ['soldiers']
-    @database.dropDatabase (error) =>
-      console.error error if error?
+    @database.soldiers.drop =>
       @collection = @database.collection 'soldiers'
       done()
 
   beforeEach ->
     @sut = new Soldiers { @database, offsetSeconds: 60 }
 
-  beforeEach 'insert records that should not be processed', (done) ->
+  before 'insert records that should not be processed', (done) ->
     records = [
       { metadata: { processing: false, processAt: 1478724782 - 100 }}
       { metadata: { processing: false, processAt: 1478724782 - 300 }}

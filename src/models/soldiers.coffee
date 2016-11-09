@@ -1,5 +1,6 @@
 _            = require 'lodash'
 moment       = require 'moment'
+{ObjectId}   = require 'mongojs'
 debug        = require('debug')('minute-man-worker:soldiers')
 overview     = require('debug')('minute-man-worker:soldiers:overview')
 
@@ -27,7 +28,7 @@ class Soldiers
       callback null, record
 
   update: ({ recordId, nextProcessAt, processAt, timestamp }, callback) =>
-    query  = { _id: recordId }
+    query  = { _id: new ObjectId(recordId) }
     update = {
       $set: {
         'metadata.processing': false
@@ -42,7 +43,7 @@ class Soldiers
 
   remove: ({ recordId }, callback) =>
     overview 'removing solider', { recordId }
-    @collection.remove { _id: recordId }, callback
+    @collection.remove { _id: new ObjectId(recordId) }, callback
 
   _getTimeQuery: ({ timestamp }) =>
     max = moment.unix(timestamp).add(@offsetSeconds, 'seconds').unix()
