@@ -5,7 +5,7 @@ moment        = require 'moment'
 
 describe 'Simple Time Example', ->
   beforeEach ->
-    timeRange = new TimeRange { timestamp: 100, offsetSeconds: 60, lastRunAt: 100, processNow: true }
+    timeRange = new TimeRange { timestamp: 100, offsetSeconds: 60, processNow: true }
     @sut = new TimeGenerator { timeRange, intervalTime: 1000 }
 
   describe 'when it gets the current seconds', ->

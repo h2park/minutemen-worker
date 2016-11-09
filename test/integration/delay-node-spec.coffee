@@ -16,7 +16,7 @@ describe 'Delay Node', ->
       done()
 
   before ->
-    @database = mongojs "minute-man-worker-test-#{uuid.v1()}", ['soldiers']
+    @database = mongojs "minute-man-worker-test", ['soldiers']
 
   beforeEach (done) ->
     @client.flushall (error) =>
@@ -25,7 +25,7 @@ describe 'Delay Node', ->
         # return done error if error?
         done()
     return # redis fix
-    
+
   beforeEach ->
     @seconds = new Seconds { @client, @queueName }
     @soldier = new Soldier { @database }

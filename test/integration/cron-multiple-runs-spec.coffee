@@ -16,7 +16,7 @@ describe 'Multiple Runs (Cron)', ->
       done()
 
   before ->
-    @database = mongojs "minute-man-worker-test-#{uuid.v1()}", ['soldiers']
+    @database = mongojs "minute-man-worker-test", ['soldiers']
 
   beforeEach (done) ->
     @client.flushall (error) =>
