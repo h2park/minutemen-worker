@@ -40,14 +40,19 @@ class PaulRevere
     return callback new Error 'Missing timestamp in _processSoldier' unless timestamp?
     debug 'process solider', { record }
     { metadata, data } = record
-    { intervalTime, cronString, processAt, processNow, lastRunAt } = metadata
-    { fireOnce } = data
-
+    {
+      intervalTime,
+      cronString,
+      processAt,
+      processNow,
+      lastRunAt,
+      fireOnce,
+    } = metadata
     recordId      = record._id
     timeRange     = new TimeRange { timestamp, lastRunAt, processNow, @offsetSeconds, fireOnce }
     timeGenerator = new TimeGenerator { timeRange, intervalTime, cronString }
     secondsList   = timeGenerator.getCurrentSeconds()
-    secondsList   = [_.first(secondsList)] if fireOnce
+    secondsList   = [_.first(secondsList)] if fireOnce && _.size(secondsList) > 0
     @_deploySoldier { secondsList, recordId }, (error) =>
       return callback(error) if error?
       nextProcessAt = timeGenerator.getNextSecond()
@@ -56,7 +61,8 @@ class PaulRevere
 
   _deploySoldier: ({ secondsList, recordId }, callback) =>
     #debug 'deploy solider', secondsList, recordId
-    overview "inserting #{secondsList.length} seconds for #{recordId}"
+    overview "inserting #{_.size(secondsList)} seconds for #{recordId}"
+    overview "first: #{_.first(secondsList)} last: #{_.last(secondsList)}" if _.size(secondsList) > 0
     async.eachSeries secondsList, async.apply(@_pushSecond, recordId), callback
 
   _pushSecond: (recordId, timestamp, callback) =>

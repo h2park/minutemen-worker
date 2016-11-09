@@ -19,7 +19,7 @@ class TimeGenerator
     min = @timeRange.min()
     debug {min,max}
     seconds = _.filter @secondsList, (second) =>
-      result = second >= min and second < max
+      result = second > min and second <= max
       #debug 'currentSeconds', min, second, max, result
       return result
     return seconds
@@ -27,7 +27,7 @@ class TimeGenerator
   getNextSecond: =>
     max = @timeRange.nextMax()
     return _.find @secondsList, (time) =>
-      return time >= max
+      return time > max
 
   getSecondsList: =>
     debug 'getSecondsList', { @intervalSeconds, @cronString }
@@ -40,14 +40,15 @@ class TimeGenerator
 
   _getSecondsFromIntervalSeconds: =>
     debug '_getSecondsFromIntervalSeconds', {@intervalSeconds}
-    min = @timeRange.min()
+    min = @timeRange.start()
     iterations = @timeRange.sampleSize()
     return _.map _.times(iterations), (n) =>
+      n += 1
       return (n * @intervalSeconds) + min
 
   _getSecondsFromCronString: =>
     debug '_getSecondsFromCronString', {@cronString}
-    start = @_calculateNextCronInterval { start: (@timeRange.min() - 1) }
+    start = @_calculateNextCronInterval { start: (@timeRange.start() - 1) }
     iterations = @timeRange.sampleSize()
     secondsList = []
     _.times iterations, =>

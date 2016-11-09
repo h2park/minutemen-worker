@@ -14,11 +14,10 @@ class Seconds
     throw new Error 'Seconds.hasSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires recordId' unless recordId?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires intervalTime' unless intervalTime?
-    currentTime = moment.unix(currentTimestamp)
     offset = _.round(intervalTime / 1000)
     @_get { currentTimestamp, recordId }, (error, seconds) =>
       return callback error if error?
-      allSeconds = _.range currentTime.unix(), (currentTime.unix() + @sampleSize)
+      allSeconds = _.range currentTimestamp, (currentTimestamp + @sampleSize)
       foundSeconds = _.map _.filter(seconds, 'value'), 'timestamp'
       expectedSeconds = _.filter allSeconds, (second) => return second % offset == 0
       _.each _.difference(expectedSeconds, allSeconds), (second) =>
@@ -27,11 +26,22 @@ class Seconds
         timeExpect.shouldNotInclude 'seconds', allSeconds, moment.unix(second)
       callback()
 
+  hasOneSecond: ({ currentTimestamp, recordId, intervalTime }, callback) =>
+    throw new Error 'Seconds.hasOneSecond (TestHelper): requires currentTimestamp' unless currentTimestamp?
+    throw new Error 'Seconds.hasOneSecond (TestHelper): requires recordId' unless recordId?
+    throw new Error 'Seconds.hasOneSecond (TestHelper): requires intervalTime' unless intervalTime?
+    offset = _.round(intervalTime / 1000)
+    @_get { currentTimestamp, recordId }, (error, seconds) =>
+      return callback error if error?
+      foundSeconds = _.map _.filter(seconds, 'value'), 'timestamp'
+      expect(foundSeconds.length).to.equal 1
+      expect(_.first(foundSeconds)).to.equal currentTimestamp + offset
+      callback()
+
   doesNotHaveSeconds: ({ currentTimestamp, recordId, intervalTime }, callback) =>
     throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires recordId' unless recordId?
     throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires intervalTime' unless intervalTime?
-    currentTime = moment.unix(currentTimestamp)
     offset = _.round(intervalTime / 1000)
     @_get { currentTimestamp, recordId }, (error, seconds) =>
       return callback error if error?
@@ -43,9 +53,8 @@ class Seconds
   _get: ({ currentTimestamp, recordId }, callback) =>
     throw new Error 'Seconds._get (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
-    currentTime = moment.unix(currentTimestamp)
     async.times @sampleSize, (n, next) =>
-      timestamp = moment(currentTime).add(n, 'seconds').unix()
+      timestamp = currentTimestamp + n
       @client.llen "#{@queueName}:#{timestamp}", (error, count) =>
         return next error if error?
         return next new Error('too many items in the second queue') if count > 1

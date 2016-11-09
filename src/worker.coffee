@@ -1,3 +1,4 @@
+_          = require 'lodash'
 async      = require 'async'
 PaulRevere = require './controllers/paul-revere'
 

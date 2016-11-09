@@ -35,6 +35,13 @@ OPTIONS = [
     help: 'MongoDB connection URI'
   },
   {
+    names: ['offset-seconds']
+    type: 'positiveInteger'
+    env: 'OFFSET_SECONDS'
+    default: 60
+    help: 'Number seconds in the future to process'
+  },
+  {
     names: ['help', 'h']
     type: 'bool'
     help: 'Print this help and exit.'
@@ -56,6 +63,7 @@ class Command
     @queueName = options.queue_name
     @mongoDBUri = options.mongodb_uri
     @timestampRedisKey = options.timestamp_redis_key
+    @offsetSeconds = options.offset_seconds
     @validateOptions()
 
   printHelp: =>
@@ -89,7 +97,7 @@ class Command
       return @die error if error?
       @getWorkerClient (error, client) =>
         return @die error if error?
-        worker = new Worker { client, database, @queueName }
+        worker = new Worker { client, database, @queueName, @offsetSeconds }
         worker.run @die
         sigtermHandler = new SigtermHandler { events: ['SIGINT', 'SIGTERM']}
         sigtermHandler.register worker.stop

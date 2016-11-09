@@ -15,6 +15,7 @@ class TimeRange
     debug 'max', @max()
     debug 'min', @min()
     debug 'processNow', @processNow
+    debug 'lastRunAt', @lastRunAt
 
   offset: =>
     return _.clone @offsetSeconds
@@ -38,7 +39,7 @@ class TimeRange
 
   sampleSize: =>
     return 1 if @fireOnce
-    return @offset() * 3
+    return @offset() * 4
 
   addOffset: (timestamp) =>
     return _.clone moment.unix(timestamp).add(@offset(), 'seconds').unix()
