@@ -37,10 +37,6 @@ class TimeRange
     return @current() unless @lastRunAt?
     return _.clone @lastRunAt
 
-  sampleSize: =>
-    return 1 if @fireOnce
-    return @offset() * 4
-
   addOffset: (timestamp) =>
     return _.clone moment.unix(timestamp).add(@offset(), 'seconds').unix()
 

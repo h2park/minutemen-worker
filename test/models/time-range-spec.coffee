@@ -45,18 +45,3 @@ describe 'TimeRange', ->
 
     it 'should be set to 60 seconds', ->
       expect(@sut.offset()).to.equal 60
-
-  describe '->sampleSize', ->
-    describe 'fireOnce is false', ->
-      beforeEach ->
-        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60 }
-
-      it 'should be set to 240 seconds', ->
-        expect(@sut.sampleSize() > 60).to.be.true
-
-    describe 'fireOnce is true', ->
-      beforeEach ->
-        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60, fireOnce: true }
-
-      it 'should be set to 1 seconds', ->
-        expect(@sut.sampleSize()).to.equal 1
