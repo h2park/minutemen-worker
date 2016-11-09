@@ -25,16 +25,21 @@ describe 'Multiple Runs (Cron)', ->
 
   beforeEach ->
     @seconds = new Seconds { @client, @queueName }
-    @sut     = new PaulRevere { @database, @client, @queueName }
+    @soldier = new Soldier { @database }
+    @sut     = new PaulRevere { @database, @client, @queueName, offsetSeconds: 60 }
 
   describe 'when cronString is once a second', ->
     beforeEach (done) ->
       @sut.getTime (error, @currentTimestamp) =>
-        @soldier = new Soldier { @database, @currentTimestamp }
         done error
 
     beforeEach (done) ->
-      @soldier.create {cronString: '* * * * * *'}, done
+      metadata = {
+        cronString: '* * * * * *',
+        processNow: true,
+        processAt: _.clone(@currentTimestamp)
+      }
+      @soldier.create metadata, done
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
@@ -46,7 +51,7 @@ describe 'Multiple Runs (Cron)', ->
       @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000 }, done
 
     it 'should have an updated record', ->
-      @soldier.checkUpdatedRecord()
+      @soldier.checkUpdatedRecord({ @currentTimestamp })
 
     describe 'wait 2 minutes and run again', ->
       beforeEach (done) ->
@@ -63,7 +68,7 @@ describe 'Multiple Runs (Cron)', ->
         @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000 }, done
 
       it 'should have an updated record', ->
-        @soldier.checkUpdatedRecord()
+        @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })
 
     describe 'wait 1 second and run again', ->
       beforeEach (done) ->
@@ -106,11 +111,15 @@ describe 'Multiple Runs (Cron)', ->
   describe 'when cronString is every other second', ->
     beforeEach (done) ->
       @sut.getTime (error, @currentTimestamp) =>
-        @soldier = new Soldier { @database, @currentTimestamp }
         done error
 
     beforeEach (done) ->
-      @soldier.create {cronString: '*/30 * * * * *'}, done
+      metadata = {
+        cronString: '*/30 * * * * *',
+        processNow: true,
+        processAt: _.clone(@currentTimestamp)
+      }
+      @soldier.create metadata, done
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
@@ -122,7 +131,7 @@ describe 'Multiple Runs (Cron)', ->
       @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 2000 }, done
 
     it 'should have an updated record', ->
-      @soldier.checkUpdatedRecord()
+      @soldier.checkUpdatedRecord({ @currentTimestamp })
 
     describe 'wait 2 minutes and run again', ->
       beforeEach (done) ->
@@ -130,16 +139,16 @@ describe 'Multiple Runs (Cron)', ->
         return # redis
 
       beforeEach (done) ->
-        @nextTimestamp = @currentTimestamp + 120
+        @nextTimestamp = _.clone @currentTimestamp + 120
         @sut.findAndDeploySoldier @nextTimestamp, (error) =>
           return done error if error?
           @soldier.get done
 
-      it 'should create the correct seconds', (done) ->
+      it 'should create a new set of correct seconds', (done) ->
         @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000 }, done
 
       it 'should have an updated record', ->
-        @soldier.checkUpdatedRecord()
+        @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })
 
     describe 'wait 1 second and run again', ->
       beforeEach (done) ->
@@ -147,7 +156,7 @@ describe 'Multiple Runs (Cron)', ->
         return # redis
 
       beforeEach (done) ->
-        @nextTimestamp = @currentTimestamp + 1
+        @nextTimestamp = _.clone @currentTimestamp + 1
         @sut.findAndDeploySoldier @nextTimestamp, (@error) =>
           @soldier.get done
 
@@ -166,7 +175,7 @@ describe 'Multiple Runs (Cron)', ->
         return # redis
 
       beforeEach (done) ->
-        @nextTimestamp = @currentTimestamp + 30
+        @nextTimestamp = _.clone @currentTimestamp + 30
         @sut.findAndDeploySoldier @nextTimestamp, (@error) =>
           @soldier.get done
 

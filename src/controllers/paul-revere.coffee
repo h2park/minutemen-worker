@@ -8,54 +8,59 @@ debug         = require('debug')('minute-man-worker:paul-revere')
 overview      = require('debug')('minute-man-worker:paul-revere:overview')
 
 class PaulRevere
-  constructor: ({ database, @client, @queueName }) ->
+  constructor: ({ database, @client, @queueName, @offsetSeconds }) ->
     throw new Error('PaulRevere: requires database') unless database?
     throw new Error('PaulRevere: requires client') unless @client?
     throw new Error('PaulRevere: requires queueName') unless @queueName?
-    @soldiers = new Soldiers { database }
+    throw new Error('PaulRevere: requires queueName to be a string') unless _.isString(@queueName)
+    throw new Error('PaulRevere: requires offsetSeconds') unless @offsetSeconds?
+    throw new Error('PaulRevere: requires offsetSeconds to be an integer') unless _.isInteger(@offsetSeconds)
+    @soldiers = new Soldiers { database, @offsetSeconds }
 
   getTime: (callback) =>
     @client.time (error, result) =>
       return callback error if error?
       [ timestamp ] = result ? []
       return callback new Error('Missing timestamp in redis') unless timestamp?
-      callback null, _.parseInt timestamp
+      timestamp = _.parseInt timestamp
+      return callback new Error('Timestamp is not a integer') unless _.isInteger(timestamp)
+      callback null, timestamp
     return # stupid redis promise fix
 
   findAndDeploySoldier: (timestamp, callback) =>
-    timeRange = new TimeRange { timestamp }
-    max = timeRange.max().unix()
-    min = timeRange.min().unix()
-    @soldiers.get { max, min }, (error, record) =>
+    timestamp = _.clone timestamp
+    @soldiers.get { timestamp }, (error, record) =>
       return callback(error) if error?
       return callback(@_createNotFoundError()) unless record?
-      @_processSoldier { record, timeRange }, callback
+      @_processSoldier { record, timestamp }, callback
 
-  _processSoldier: ({ record, timeRange }, callback) =>
+  _processSoldier: ({ record, timestamp }, callback) =>
+    return callback new Error 'Missing record in _processSoldier' unless record?
+    return callback new Error 'Missing record._id in _processSoldier' unless record._id?
+    return callback new Error 'Missing timestamp in _processSoldier' unless timestamp?
     debug 'process solider', { record }
     { metadata, data } = record
-    { intervalTime, cronString, processAt, processNow } = metadata
+    { intervalTime, cronString, processAt, processNow, lastRunAt } = metadata
     { fireOnce } = data
-    recordId = record._id
-    timeGenerator = new TimeGenerator { timeRange, intervalTime, processAt, cronString, processNow, fireOnce }
-    secondsList = timeGenerator.getCurrentSeconds()
+
+    recordId      = record._id
+    timeRange     = new TimeRange { timestamp, lastRunAt, processNow, @offsetSeconds, fireOnce }
+    timeGenerator = new TimeGenerator { timeRange, intervalTime, cronString }
+    secondsList   = timeGenerator.getCurrentSeconds()
+    secondsList   = [_.first(secondsList)] if fireOnce
     @_deploySoldier { secondsList, recordId }, (error) =>
       return callback(error) if error?
       nextProcessAt = timeGenerator.getNextSecond()
-      overview 'now', moment().unix()
-      overview 'min', timeRange.min().unix()
-      overview 'max', timeRange.max().unix()
-      overview 'current', timeRange.current().unix()
-      timestamp = timeRange.current().unix()
+      timestamp     = timeRange.current()
       @soldiers.update { recordId, nextProcessAt, processAt, timestamp }, callback
 
   _deploySoldier: ({ secondsList, recordId }, callback) =>
-    debug 'deploy solider', secondsList, recordId
+    #debug 'deploy solider', secondsList, recordId
     overview "inserting #{secondsList.length} seconds for #{recordId}"
     async.eachSeries secondsList, async.apply(@_pushSecond, recordId), callback
 
   _pushSecond: (recordId, timestamp, callback) =>
-    debug 'lpushing', { timestamp, recordId }
+    #debug 'lpushing', { timestamp, recordId }
     data = {recordId,timestamp}
     @client.lpush "#{@queueName}:#{timestamp}", JSON.stringify(data), callback
     return # redis fix

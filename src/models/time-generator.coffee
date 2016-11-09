@@ -5,30 +5,32 @@ TimeRange  = require './time-range'
 debug      = require('debug')('minute-man-worker:time-generator')
 
 class TimeGenerator
-  constructor: ({ @timeRange, @cronString, intervalTime, @processAt, @processNow, @fireOnce }) ->
+  constructor: ({ @timeRange, @cronString, intervalTime }) ->
     throw new Error 'TimeGenerator: requires timeRange' unless @timeRange?
-    @processAt ?= @timeRange.current().unix()
+    throw new Error 'TimeGenerator: requires intervalTime to be an integer' if intervalTime? and !_.isInteger(intervalTime)
+    throw new Error 'TimeGenerator: requires cronString to be a string' if @cronString? and !_.isString(@cronString)
+    throw new Error 'TimeGenerator: requires either cronString or intervalTime' unless intervalTime? || @cronString?
     @intervalSeconds = @_intervalTimeToSeconds(intervalTime) if intervalTime?
     @secondsList = _.sortedUniq @getSecondsList()
     debug 'secondsList', @secondsList
 
   getCurrentSeconds: =>
-    max = @timeRange.max().unix()
-    min = @processAt
-    min = min - 60 unless @processNow
-    console.log {min,max}
-    return _.filter @secondsList, (time) =>
-      result = time > min and time < max
-      console.log  min, time, max, result
+    max = @timeRange.max()
+    min = @timeRange.min()
+    debug {min,max}
+    seconds = _.filter @secondsList, (second) =>
+      result = second >= min and second < max
+      #debug 'currentSeconds', min, second, max, result
       return result
+    return seconds
 
   getNextSecond: =>
-    max = @timeRange.max().unix()
+    max = @timeRange.nextMax()
     return _.find @secondsList, (time) =>
-      return time >= ( max + 60 )
+      return time >= max
 
   getSecondsList: =>
-    debug 'getSecondsList', { @intervalSeconds, @cronString, @processAt }
+    debug 'getSecondsList', { @intervalSeconds, @cronString }
     return @_getSecondsFromIntervalSeconds() if @intervalSeconds?
     return @_getSecondsFromCronString() if @cronString?
     throw new Error 'Invalid interval format'
@@ -37,42 +39,30 @@ class TimeGenerator
     return _.round(intervalTime / 1000)
 
   _getSecondsFromIntervalSeconds: =>
-    debug 'intervalSeconds', @intervalSeconds
-    startDate = @timeRange.min()
-    debug 'interval startDate', startDate.unix()
-    secondsList = []
-    iterations = 1
-    iterations = @timeRange.sampleSize() unless @fireOnce
-    _.times iterations, =>
-      startDate.add(@intervalSeconds, 'seconds')
-      secondWindow = startDate.unix()
-      secondsList.push secondWindow
-      return
-    return secondsList
+    debug '_getSecondsFromIntervalSeconds', {@intervalSeconds}
+    min = @timeRange.min()
+    iterations = @timeRange.sampleSize()
+    return _.map _.times(iterations), (n) =>
+      return (n * @intervalSeconds) + min
 
   _getSecondsFromCronString: =>
-    debug 'cronString', @cronString
-    return [ @timeRange.min().add(@intervalSeconds, 'seconds').unix() ] if @fireOnce
-    startDate = @timeRange.min().subtract(1, 'second') # wut is this
-    debug 'cron startDate', startDate.unix()
+    debug '_getSecondsFromCronString', {@cronString}
+    start = @_calculateNextCronInterval { start: (@timeRange.min() - 1) }
+    iterations = @timeRange.sampleSize()
     secondsList = []
-    iterations = 1
-    iterations = @timeRange.sampleSize() unless @fireOnce
     _.times iterations, =>
-      secondWindow = @_calculateNextCronInterval { startDate }
-      secondsList.push secondWindow
-      startDate = moment.unix(secondWindow)
-      return
-    #debug 'secondsList', secondsList
+      secondsList.push start
+      start = @_calculateNextCronInterval { start }
     return secondsList
 
-  _calculateNextCronInterval: ({ startDate }) =>
-    parser = cronParser.parseExpression @cronString, currentDate: startDate.toDate()
+  _calculateNextCronInterval: ({ start }) =>
+    currentDate = moment.unix(start).toDate()
+    parser = cronParser.parseExpression @cronString, { currentDate }
     nextTime = @_getNextTimeFromCronParser(parser)
-    nextTime = @_getNextTimeFromCronParser(parser) if nextTime.unix() == startDate.unix()
-    return nextTime.unix()
+    nextTime = @_getNextTimeFromCronParser(parser) if nextTime == start
+    return nextTime
 
   _getNextTimeFromCronParser: (parser) =>
-    return moment(parser.next()?.toDate().valueOf())
+    return moment(parser.next()?.toDate().valueOf()).unix()
 
 module.exports = TimeGenerator

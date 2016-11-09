@@ -4,12 +4,11 @@ moment       = require 'moment'
 timeExpect   = require './time-expect'
 
 class Soldier
-  constructor: ({ database, @currentTimestamp }) ->
+  constructor: ({ database }) ->
+    throw new Error 'Soldier (TestHelper): requires database' unless database?
     @collection = database.collection 'soldiers'
 
-  create: (metadata, callback) =>
-    metadata.processAt = @currentTimestamp
-    metadata.processNow = true
+  create: (metadata={}, callback) =>
     data =
       nonce: "nonce-#{_.random()}"
       uuid: "uuid-#{_.random()}"
@@ -23,13 +22,14 @@ class Soldier
       @recordId = record._id
       @get callback
 
-  checkUpdatedRecord: =>
+  checkUpdatedRecord: ({ currentTimestamp }) =>
+    throw new Error 'Soldier.checkUpdatedRecord (TestHelper): requires currentTimestamp' unless currentTimestamp?
     processAt = moment.unix(@record.metadata.processAt)
     lastProcessAt = moment.unix(@record.metadata.lastProcessAt)
     pervProcessAt = moment.unix(@prevRecord.metadata.processAt)
     timeExpect.shouldBeGreaterThan 'processAt', processAt, processAt.add(2, 'minute')
     timeExpect.shouldEqual 'lastProcessAt', lastProcessAt, pervProcessAt
-    timeExpect.shouldInclude 'lastRunAt', @record.metadata.lastRunAt, moment.unix(@currentTimestamp)
+    timeExpect.shouldEqual 'lastRunAt', moment.unix(@record.metadata.lastRunAt), moment.unix(currentTimestamp)
     assert.isFalse @record.metadata.processing, "processing should be set to false"
     assert.isFalse @record.metadata.processNow, "processNow should be set to false"
 

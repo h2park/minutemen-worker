@@ -4,16 +4,20 @@ PaulRevere = require './controllers/paul-revere'
 class Worker
   constructor: (options={})->
     { client, queueName, database } = options
-    { @timestamp } = options
+    { @timestamp, offsetSeconds } = options
     throw new Error('Worker: requires client') unless client?
     throw new Error('Worker: requires queueName') unless queueName?
+    throw new Error('Worker: requires queueName to be a string') unless _.isString(queueName)
     throw new Error('Worker: requires database') unless database?
+    throw new Error('Worker: requires offsetSeconds') unless offsetSeconds?
+    throw new Error('Worker: requires offsetSeconds to be an integer') unless _.isInteger(offsetSeconds)
     @shouldStop = false
     @isStopped  = false
     @paulRevere = new PaulRevere {
       database,
       client,
       queueName,
+      offsetSeconds,
     }
 
   doWithNextTick: (callback) =>
@@ -24,7 +28,6 @@ class Worker
           callback error
 
   do: (callback) =>
-    return @paulRevere.findAndDeploySoldier @timestamp, callback if @timestamp?
     @paulRevere.getTime (error, timestamp) =>
       return callback error if error?
       @paulRevere.findAndDeploySoldier timestamp, (error) =>
@@ -46,7 +49,7 @@ class Worker
     , 5000
 
     interval = setInterval =>
-      return unless @isStopped?
+      return unless @isStopped
       clearInterval interval
       clearTimeout timeout
       callback()

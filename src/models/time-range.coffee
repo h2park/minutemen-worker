@@ -4,30 +4,43 @@ debug    = require('debug')('minute-man-worker:time-generator')
 overview = require('debug')('minute-man-worker:time-generator:overview')
 
 class TimeRange
-  constructor: ({ @timestamp }) ->
-    throw new Error 'TimeGenerator: requires timestamp' unless @timestamp?
-    timestamp = _.parseInt @timestamp
-    @_offsetSeconds = 60
-    debug 'currentTime', @current().unix()
-    debug 'max', @max().unix()
-    debug 'min', @min().unix()
+  constructor: ({ @timestamp, @lastRunAt, @offsetSeconds, @processNow, @fireOnce }) ->
+    throw new Error 'TimeRange: requires timestamp' unless @timestamp?
+    throw new Error 'TimeRange: requires timestamp to be an integer' unless _.isInteger(@timestamp)
+    throw new Error 'TimeRange: requires offsetSeconds' unless @offsetSeconds?
+    throw new Error 'TimeRange: requires offsetSeconds to be an integer' unless _.isInteger(@offsetSeconds)
+    debug 'currentTime', @current()
+    debug 'offset', @offset()
+    debug 'nextMax', @nextMax()
+    debug 'max', @max()
+    debug 'min', @min()
+    debug 'processNow', @processNow
 
   offset: =>
-    return @_offsetSeconds
+    return _.clone @offsetSeconds
 
   current: =>
-    return moment.unix(@timestamp)
+    return _.clone @timestamp
 
   max: =>
-    return @_addOffset(@current().unix())
+    return @addOffset(@current())
+
+  nextMax: =>
+    return @addOffset(@max())
 
   min: =>
+    return _.clone @lastRunAt if @lastRunAt > @current()
     return @current()
 
+  start: =>
+    return @current() unless @lastRunAt?
+    return _.clone @lastRunAt
+
   sampleSize: =>
+    return 1 if @fireOnce
     return @offset() * 3
 
-  _addOffset: (timestamp) =>
-    return moment.unix(timestamp).add(@offset(), 'seconds')
+  addOffset: (timestamp) =>
+    return _.clone moment.unix(timestamp).add(@offset(), 'seconds').unix()
 
 module.exports = TimeRange

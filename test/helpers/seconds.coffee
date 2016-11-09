@@ -6,9 +6,14 @@ debug      = require('debug')('minute-man-worker:test')
 
 class Seconds
   constructor: ({ @client, @queueName, @sampleSize }) ->
+    throw new Error 'Seconds (TestHelper): requires client' unless @client?
+    throw new Error 'Seconds (TestHelper): requires queueName' unless @queueName?
     @sampleSize ?= 60
 
   hasSeconds: ({ currentTimestamp, recordId, intervalTime }, callback) =>
+    throw new Error 'Seconds.hasSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
+    throw new Error 'Seconds.hasSeconds (TestHelper): requires recordId' unless recordId?
+    throw new Error 'Seconds.hasSeconds (TestHelper): requires intervalTime' unless intervalTime?
     currentTime = moment.unix(currentTimestamp)
     offset = _.round(intervalTime / 1000)
     @_get { currentTimestamp, recordId }, (error, seconds) =>
@@ -23,6 +28,9 @@ class Seconds
       callback()
 
   doesNotHaveSeconds: ({ currentTimestamp, recordId, intervalTime }, callback) =>
+    throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
+    throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires recordId' unless recordId?
+    throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires intervalTime' unless intervalTime?
     currentTime = moment.unix(currentTimestamp)
     offset = _.round(intervalTime / 1000)
     @_get { currentTimestamp, recordId }, (error, seconds) =>
@@ -33,6 +41,8 @@ class Seconds
       callback()
 
   _get: ({ currentTimestamp, recordId }, callback) =>
+    throw new Error 'Seconds._get (TestHelper): requires currentTimestamp' unless currentTimestamp?
+    throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
     currentTime = moment.unix(currentTimestamp)
     async.times @sampleSize, (n, next) =>
       timestamp = moment(currentTime).add(n, 'seconds').unix()
