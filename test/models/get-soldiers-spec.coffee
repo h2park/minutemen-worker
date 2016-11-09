@@ -2,7 +2,7 @@ mongojs    = require 'mongojs'
 {ObjectId} = require 'mongojs'
 Soldiers   = require '../../src/models/soldiers'
 
-describe.only 'Get Soldiers', ->
+describe 'Get Soldiers', ->
   beforeEach (done) ->
     @database = mongojs 'minute-man-worker-test', ['soldiers']
     @database.dropDatabase (error) =>

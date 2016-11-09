@@ -8,18 +8,23 @@ Seconds    = require '../helpers/seconds'
 PaulRevere = require '../../src/controllers/paul-revere'
 
 describe 'Multiple Runs (Interval)', ->
-  beforeEach (done) ->
+  before (done) ->
     @queueName = "seconds-#{uuid.v1()}"
     client = new Redis 'localhost', dropBufferSupport: true
     client.on 'ready', =>
       @client = new RedisNS 'test-worker', client
-      @client.flushall done
+      done()
+
+  before ->
+    @database = mongojs "minute-man-worker-test-#{uuid.v1()}", ['soldiers']
 
   beforeEach (done) ->
-    @database = mongojs 'minute-man-worker-test', ['soldiers']
-    @database.dropDatabase (error) =>
-      console.error error if error?
-      done()
+    @client.flushall (error) =>
+      return done error if error?
+      @database.soldiers.drop (error) =>
+        # return done error if error?
+        done()
+    return # redis fix
 
   beforeEach ->
     @seconds = new Seconds { @client, @queueName }

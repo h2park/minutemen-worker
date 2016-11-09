@@ -53,18 +53,26 @@ class Seconds
   _get: ({ currentTimestamp, recordId }, callback) =>
     throw new Error 'Seconds._get (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
-    async.times @sampleSize, (n, next) =>
-      timestamp = currentTimestamp + n
-      @client.llen "#{@queueName}:#{timestamp}", (error, count) =>
-        return next error if error?
-        return next new Error('too many items in the second queue') if count > 1
-        return next null, {timestamp} if count == 0
-        @client.brpop "#{@queueName}:#{timestamp}", 1, (error, result) =>
-          return next error if error?
-          data = JSON.parse result[1]
-          return next new Error 'Record ID does not match' unless data.recordId == recordId
-          return next new Error 'Timestamp does not match' unless _.parseInt(data.timestamp) == timestamp
-          next null, {timestamp,value:data}
-    , callback
+    multi = @client.multi()
+    allSeconds = _.times @sampleSize, (n) =>
+      return currentTimestamp + n
+    _.each allSeconds, (timestamp) =>
+      multi.lrange "test-worker:#{@queueName}:#{timestamp}", 0, -1
+      return
+    multi.exec (error, results) =>
+      return callback error if error?
+      callback = _.once callback
+      seconds = []
+      _.each results, ([ignore, result], i) =>
+        count = _.size(result)
+        timestamp = allSeconds[i]
+        return callback new Error('too many items in the second queue') if count > 1
+        return seconds.push {timestamp} if count == 0
+        data = JSON.parse _.first(result)
+        return callback new Error 'Record ID does not match' unless data.recordId == recordId
+        return callback new Error 'Timestamp does not match' unless _.parseInt(data.timestamp) == timestamp
+        seconds.push {timestamp,value:data}
+      callback null, seconds
+    return # redis fix
 
 module.exports = Seconds
