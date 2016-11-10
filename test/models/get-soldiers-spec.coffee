@@ -14,8 +14,6 @@ describe 'Get Soldiers', ->
 
   before 'insert records that should not be processed', (done) ->
     records = [
-      { metadata: { processing: false, processAt: 1478724782 - 100 }}
-      { metadata: { processing: false, processAt: 1478724782 - 300 }}
       { metadata: { processing: false, processAt: 1478724782 + 100 }}
       { metadata: { processing: false, processAt: 1478724782 + 300 }}
       { metadata: { processing: true, processAt: 1478724782 + 10 }}
@@ -113,16 +111,16 @@ describe 'Get Soldiers', ->
       @sut.get { timestamp: 1478724782 }, (error, @record) =>
         done error
 
-    it 'should not find the record', ->
-      expect(@record).to.not.exist
+    it 'should find still the record', ->
+      expect(@record._id.toString()).to.equal @recordId
 
     describe 'when the record is checked again', ->
       beforeEach (done) ->
         @collection.findOne { _id: new ObjectId(@recordId) }, (error, @updatedRecord) =>
           done error
 
-      it 'should not be set to processing', ->
-        expect(@updatedRecord.metadata.processing).to.be.false
+      it 'should it to processing', ->
+        expect(@updatedRecord.metadata.processing).to.be.true
 
   describe 'when a record exists and the processAt is 61 seconds to after the current time', ->
     beforeEach (done) ->

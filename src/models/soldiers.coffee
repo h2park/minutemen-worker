@@ -49,7 +49,7 @@ class Soldiers
     max = moment.unix(timestamp).add(@offsetSeconds, 'seconds').unix()
     return {
       $lte: max
-      $gte: ( timestamp - 1) # it should never process things in the past
+      #$gte: ( timestamp - 1) # it should never process things in the past
     }
 
 module.exports = Soldiers
