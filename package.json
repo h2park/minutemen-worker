@@ -1,12 +1,12 @@
 {
-  "name": "minute-man-worker",
+  "name": "minutemen-worker",
   "version": "1.0.0",
-  "description": "minute-man-worker",
+  "description": "minutemen-worker",
   "keywords": [
     "worker"
   ],
-  "homepage": "https://github.com/octoblu/minute-man-worker",
-  "bugs": "https://github.com/octoblu/minute-man-worker/issues",
+  "homepage": "https://github.com/octoblu/minutemen-worker",
+  "bugs": "https://github.com/octoblu/minutemen-worker/issues",
   "author": {
     "name": "Octoblu",
     "url": "https://github.com/octoblu"
@@ -14,7 +14,7 @@
   "bin": "command.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/octoblu/minute-man-worker.git"
+    "url": "https://github.com/octoblu/minutemen-worker.git"
   },
   "scripts": {
     "start": "node command.js",

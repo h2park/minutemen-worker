@@ -2,7 +2,7 @@ _          = require 'lodash'
 async      = require 'async'
 moment     = require 'moment'
 timeExpect = require './time-expect'
-debug      = require('debug')('minute-man-worker:test')
+debug      = require('debug')('minutemen-worker:test')
 
 class Seconds
   constructor: ({ @client, @queueName, @sampleSize }) ->

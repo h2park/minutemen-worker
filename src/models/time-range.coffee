@@ -1,7 +1,7 @@
 _        = require 'lodash'
 moment   = require 'moment'
-debug    = require('debug')('minute-man-worker:time-generator')
-overview = require('debug')('minute-man-worker:time-generator:overview')
+debug    = require('debug')('minutemen-worker:time-generator')
+overview = require('debug')('minutemen-worker:time-generator:overview')
 
 class TimeRange
   constructor: ({ @timestamp, @lastRunAt, @offsetSeconds, @processNow, @fireOnce }) ->

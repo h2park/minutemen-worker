@@ -4,7 +4,7 @@ Soldiers   = require '../../src/models/soldiers'
 
 describe 'Update Soldiers', ->
   before (done) ->
-    @database = mongojs 'minute-man-worker-test', ['soldiers']
+    @database = mongojs 'minutemen-worker-test', ['soldiers']
     @database.soldiers.drop =>
       @collection = @database.collection 'soldiers'
       done()

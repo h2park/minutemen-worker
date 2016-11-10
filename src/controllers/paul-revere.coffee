@@ -4,8 +4,8 @@ moment        = require 'moment'
 Soldiers      = require '../models/soldiers'
 TimeRange     = require '../models/time-range'
 TimeGenerator = require '../models/time-generator'
-debug         = require('debug')('minute-man-worker:paul-revere')
-overview      = require('debug')('minute-man-worker:paul-revere:overview')
+debug         = require('debug')('minutemen-worker:paul-revere')
+overview      = require('debug')('minutemen-worker:paul-revere:overview')
 
 class PaulRevere
   constructor: ({ database, @client, @queueName, @offsetSeconds }) ->

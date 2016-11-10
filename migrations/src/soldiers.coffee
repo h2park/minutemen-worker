@@ -8,7 +8,7 @@ INDEXES = [
   }
   {
     index: { 'metadata.processAt': 1, 'metadata.processing': -1 }
-    name : 'minute-man-worker'
+    name : 'minutemen-worker'
   }
 ]
 

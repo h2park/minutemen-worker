@@ -1,8 +1,8 @@
 _            = require 'lodash'
 moment       = require 'moment'
 {ObjectId}   = require 'mongojs'
-debug        = require('debug')('minute-man-worker:soldiers')
-overview     = require('debug')('minute-man-worker:soldiers:overview')
+debug        = require('debug')('minutemen-worker:soldiers')
+overview     = require('debug')('minutemen-worker:soldiers:overview')
 
 class Soldiers
   constructor: ({ database, @offsetSeconds }) ->

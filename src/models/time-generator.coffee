@@ -2,7 +2,7 @@ _          = require 'lodash'
 cronParser = require 'cron-parser'
 moment     = require 'moment'
 TimeRange  = require './time-range'
-debug      = require('debug')('minute-man-worker:time-generator')
+debug      = require('debug')('minutemen-worker:time-generator')
 
 class TimeGenerator
   constructor: ({ @timeRange, @cronString, intervalTime }) ->

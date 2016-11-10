@@ -16,7 +16,7 @@ describe 'Delay Node', ->
       done()
 
   before ->
-    @database = mongojs "minute-man-worker-test", ['soldiers']
+    @database = mongojs "minutemen-worker-test", ['soldiers']
 
   beforeEach (done) ->
     @client.flushall (error) =>
