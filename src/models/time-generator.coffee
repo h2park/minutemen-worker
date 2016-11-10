@@ -47,7 +47,7 @@ class TimeGenerator
     debug '_getSecondsFromCron', {@cronString, min, max}
     secondsList = []
     second = @_getNextSecondFromCron { second: min }
-    while second > min and second <= max
+    while second <= max
       secondsList.push second
       second = @_getNextSecondFromCron { second }
     return secondsList

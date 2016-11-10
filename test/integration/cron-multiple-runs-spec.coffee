@@ -51,7 +51,7 @@ describe 'Multiple Runs (Cron)', ->
         @soldier.get done
 
     it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000 }, done
+      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
 
     it 'should have an updated record', ->
       @soldier.checkUpdatedRecord({ @currentTimestamp })
@@ -68,7 +68,7 @@ describe 'Multiple Runs (Cron)', ->
           @soldier.get done
 
       it 'should create the correct seconds', (done) ->
-        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000 }, done
+        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
 
       it 'should have an updated record', ->
         @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })
@@ -87,7 +87,7 @@ describe 'Multiple Runs (Cron)', ->
         expect(@error.code).to.equal 404
 
       it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000 }, done
+        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
 
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()
@@ -106,7 +106,7 @@ describe 'Multiple Runs (Cron)', ->
         expect(@error.code).to.equal 404
 
       it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime: 1000 }, done
+        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime: 1000,isCron:true }, done
 
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()
@@ -118,7 +118,7 @@ describe 'Multiple Runs (Cron)', ->
 
     beforeEach (done) ->
       metadata = {
-        cronString: '*/30 * * * * *',
+        cronString: '*/2 * * * * *',
         processNow: true,
         processAt: _.clone(@currentTimestamp)
       }
@@ -131,7 +131,7 @@ describe 'Multiple Runs (Cron)', ->
         @soldier.get done
 
     it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 2000 }, done
+      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 2000,isCron:true }, done
 
     it 'should have an updated record', ->
       @soldier.checkUpdatedRecord({ @currentTimestamp })
@@ -148,7 +148,7 @@ describe 'Multiple Runs (Cron)', ->
           @soldier.get done
 
       it 'should create a new set of correct seconds', (done) ->
-        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000 }, done
+        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000,isCron:true }, done
 
       it 'should have an updated record', ->
         @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })
@@ -167,7 +167,7 @@ describe 'Multiple Runs (Cron)', ->
         expect(@error.code).to.equal 404
 
       it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000 }, done
+        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000,isCron:true }, done
 
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()
@@ -186,7 +186,7 @@ describe 'Multiple Runs (Cron)', ->
         expect(@error.code).to.equal 404
 
       it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime:2000 }, done
+        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime:2000,isCron:true }, done
 
       it 'should remain untouched since the last process', ->
         @soldier.checkSameRecord()

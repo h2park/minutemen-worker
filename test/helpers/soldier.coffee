@@ -24,18 +24,17 @@ class Soldier
 
   checkUpdatedRecord: ({ currentTimestamp }) =>
     throw new Error 'Soldier.checkUpdatedRecord (TestHelper): requires currentTimestamp' unless currentTimestamp?
-    processAt = moment.unix(@record.metadata.processAt)
+    processAt     = moment.unix(@record.metadata.processAt)
     lastProcessAt = moment.unix(@record.metadata.lastProcessAt)
     pervProcessAt = moment.unix(@prevRecord.metadata.processAt)
-    timeExpect.shouldBeGreaterThan 'processAt', processAt, processAt.add(2, 'minute')
+    timeExpect.shouldBeAtLeast 'processAt', processAt, processAt.add(2, 'minute')
     timeExpect.shouldEqual 'lastProcessAt', lastProcessAt, pervProcessAt
     timeExpect.shouldEqual 'lastRunAt', moment.unix(@record.metadata.lastRunAt), moment.unix(currentTimestamp)
     assert.isFalse @record.metadata.processing, "processing should be set to false"
     assert.isFalse @record.metadata.processNow, "processNow should be set to false"
 
   checkSameRecord: =>
-    return if _.isEqual @record, @prevRecord
-    assert.fail @record, @pervRecord, "expected record not to update"
+    assert.deepEqual @record, @prevRecord, "expected record to not have changed"
 
   getRecordId: =>
     return @recordId.toString()
