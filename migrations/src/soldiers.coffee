@@ -26,7 +26,6 @@ class Soldiers
   createFromInterval: (interval, callback) =>
     @exists interval, (error, exists) =>
       return callback error if error?
-      return callback null if exists
       @upsert interval, callback
 
   exists: ({ ownerId, nodeId }, callback) =>
@@ -36,42 +35,45 @@ class Soldiers
       return callback new Error 'More than one soldier exists for that query' if count > 1
       callback null, count == 1
 
-  upsert: ({ ownerId, nodeId, data }, callback) =>
+  upsert: ({ id, token, ownerId, data }, callback) =>
     {
-      sendTo,
       intervalTime,
       fireOnce,
-      nodeId,
-      transactionId,
       nonce,
       cronString,
-      uuid,
-      token,
-    } = data
+      transactionId,
+      nodeId,
+      sendTo,
+    } = data ? {}
     update = {}
     update['data.nodeId'] = nodeId
-    update['data.sendTo'] = sendTo
+    update['data.sendTo'] = sendTo ? ownerId
     update['data.transactionId'] = transactionId if transactionId?
     update['data.fireOnce'] = fireOnce
-    update['data.uuid'] = uuid if uuid?
+    update['data.uuid'] = id if id?
     update['data.token'] = token if token?
     update['data.nodeId'] = nodeId
     update['metadata.nonce'] = nonce if nonce?
-    update['metadata.intervalTime'] = intervalTime if intervalTime?
+    update['metadata.intervalTime'] = parseInt(intervalTime) if intervalTime?
     update['metadata.cronString'] = cronString if cronString?
-    update['metadata.processAt'] = moment().unix()
-    update['metadata.processNow'] = true
+    update['metadata.processAt'] = moment().unix() unless fireOnce
+    update['metadata.processNow'] = true unless fireOnce
     update['metadata.fireOnce'] = fireOnce
     update['metadata.ownerUuid'] = ownerId
-    update['metadata.intervalUuid'] = uuid if uuid?
+    update['metadata.intervalUuid'] = id if id?
     update['metadata.nodeId'] = nodeId
-    query = @_getQuery({ ownerId, nodeId })
-    @collection.update query, { $set: update }, { upsert: true }, callback
+    query = @_getQuery({ sendTo, nodeId })
+    console.log 'update query', query
+    @collection.update query, { $set: update }, { upsert: true }, (error, result) =>
+      return callback error if error?
+      console.log 'updated record', update
+      console.log 'updated result', result
+      callback null
 
-  _getQuery: ({ ownerId, nodeId }) =>
+  _getQuery: ({ sendTo, nodeId }) =>
     return {
       'metadata.nodeId'   : nodeId
-      'metadata.ownerUuid': ownerId
+      'metadata.ownerUuid': sendTo
     }
 
 module.exports = Soldiers
