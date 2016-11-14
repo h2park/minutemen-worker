@@ -13,7 +13,7 @@ class Intervals
     limit = @limit if @limit < 10
     limit ?= 10
     query = {
-      ownerId: 'b47887f8-e897-4d79-9b60-42b7c965591d',
+      ownerId: '9d1bcb2a-9a2f-48d3-9c15-3b6939a649f2',
       data: {$exists:true}
     }
     @collection
