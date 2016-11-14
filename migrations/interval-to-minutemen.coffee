@@ -11,22 +11,23 @@ program
   .option '-r, --redis-uri <string>', 'Redis URI'
   .option '-l, --limit <integer>', 'Limit number of records processed'
   .option '-s, --skip <integer>', 'Skip of number of records to be processed'
+  .option '-f, --flow-id <string>', 'Migrate just one flow'
 
 class IntervalToMinutemen
   constructor: (argv) ->
     process.on 'uncaughtException', @die
     program.parse argv
-    { @mongodbUri, @redisUri, @limit, @skip } = @getOptions()
+    { @mongodbUri, @redisUri, @limit, @skip, @flowId } = @getOptions()
 
   getOptions: =>
-    { mongodbUri, redisUri, limit, skip } = program
+    { mongodbUri, redisUri, limit, skip, flowId } = program
     @dieHelp new Error 'Missing MongoDB URI' unless mongodbUri?
     @dieHelp new Error 'Missing Redis URI' unless redisUri?
     limit = parseInt(limit) if limit?
     skip = parseInt(skip) if skip?
     skip ?= 0
     limit ?= 10
-    return { mongodbUri, redisUri, limit, skip }
+    return { mongodbUri, redisUri, limit, skip, flowId }
 
   run: =>
     database = mongojs @mongodbUri
@@ -36,7 +37,7 @@ class IntervalToMinutemen
       client = _.bindAll client, _.functionsIn(client)
       client.on 'error', @die
       client.on 'ready', =>
-        transfer = new Transfer { database, client, @limit, @skip }
+        transfer = new Transfer { database, client, @limit, @skip, @flowId }
         transfer.setup (error) =>
           return @die error if error?
           transfer.processAll @die

@@ -15,11 +15,20 @@ class Soldiers
   get: ({ timestamp }, callback) =>
     debug 'finding soldier', { timestamp }
     query = {
-      'metadata.processing': { $ne: true }
-      'metadata.processAt': @_getTimeQuery({ timestamp })
+      $and: [
+          { 'metadata.processing': { $ne: true } }
+          { 'metadata.processAt': @_getTimeQuery({ timestamp }) }
+          {
+            $or: [
+              {'metadata.intervalTime': {$exists: true}}
+              {'metadata.cronString': {$exists: true}}
+            ]
+          }
+      ]
+
     }
     update = { 'metadata.processing': true }
-    sort = { 'metadata.processAt': 1 }
+    sort = { 'metadata.processAt': -1 }
     debug 'get.query', JSON.stringify(query)
     @collection.findAndModify { query, update: { $set: update }, sort }, (error, record) =>
       return callback error if error?

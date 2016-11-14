@@ -3,14 +3,15 @@ async       = require 'async'
 Intervals   = require './intervals'
 Soldiers    = require './soldiers'
 LegacyRedis = require './legacy-redis'
+debug       = require('debug')('migrate:transfer')
 
 class Transfer
-  constructor: ({ database, client, skip, limit }) ->
+  constructor: ({ database, client, skip, limit, flowId }) ->
     throw new Error 'Transfer: requires database' unless database?
     throw new Error 'Transfer: requires client' unless client?
     throw new Error 'Transfer: requires skip' unless skip?
     throw new Error 'Transfer: requires limit' unless limit?
-    @intervals = new Intervals { database, skip, limit }
+    @intervals = new Intervals { database, client, skip, limit, flowId }
     @soldiers = new Soldiers { database }
     @legacyRedis = new LegacyRedis { client }
 
@@ -23,21 +24,25 @@ class Transfer
   processBatch: (callback) =>
     @intervals.getBatch (error, intervals) =>
       return callback error if error?
-      console.log "got #{_.size(intervals)} intervals"
-      async.eachSeries intervals, @processSingle, (error) =>
+      debug "got #{_.size(intervals)} intervals"
+      async.each intervals, @processSingle, (error) =>
         return callback error if error?
         callback null, _.size(intervals)
 
   processSingle: (interval, callback) =>
     @intervals.getCredentials interval, (error, interval) =>
       return callback error if error?
+      { ownerId, nodeId, id, token } = interval
+      { fireOnce } = interval?.data ? {}
+      unless id? || token?
+        debug 'not migrating due to lack of credentials, skipping...', {ownerId, nodeId, id}
+        callback null
+        return
       @soldiers.createFromInterval interval, (error) =>
         return callback error if error?
         @legacyRedis.disable interval, (error) =>
           return callback error if error?
-          { ownerId, nodeId, id } = interval
-          { fireOnce } = interval?.data ? {}
-          console.log 'migrated', {ownerId, nodeId, id} unless fireOnce
+          debug 'migrated', {ownerId, nodeId, id} unless fireOnce
           callback null
 
   shouldContinue: (count) =>

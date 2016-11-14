@@ -28,6 +28,7 @@ describe 'Get Soldiers', ->
           metadata:
             processing: false
             processAt: 1478724782 + 8
+            intervalTime: 1000
         @collection.insert record, (error, record) =>
           @recordId = record?._id.toString()
           done error
@@ -47,12 +48,30 @@ describe 'Get Soldiers', ->
         it 'should it to processing', ->
           expect(@updatedRecord.metadata.processing).to.be.true
 
+    describe 'when it has no processAt', ->
+      beforeEach (done) ->
+        record =
+          metadata:
+            processing: false
+            intervalTime: 1000
+        @collection.insert record, (error, record) =>
+          @recordId = record?._id.toString()
+          done error
+
+      beforeEach (done) ->
+        @sut.get { timestamp: 1478724782 }, (error, @record) =>
+          done error
+
+      it 'should not find the record', ->
+        expect(@record).to.not.exist
+
     describe 'when it is set to processing', ->
       beforeEach (done) ->
         record =
           metadata:
             processing: true
             processAt: 1478724782 + 8
+            cronString: '* * * * *'
         @collection.insert record, (error, record) =>
           @recordId = record?._id.toString()
           done error
@@ -78,6 +97,7 @@ describe 'Get Soldiers', ->
         metadata:
           processing: false
           processAt: 1478724782 - 1
+          cronString: '* * * * *'
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error
@@ -103,6 +123,7 @@ describe 'Get Soldiers', ->
         metadata:
           processing: false
           processAt: 1478724782 - 80
+          intervalTime: 1
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error
@@ -128,6 +149,7 @@ describe 'Get Soldiers', ->
         metadata:
           processing: false
           processAt: 1478724780 + 61
+          interalTime: 1000
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error
@@ -153,6 +175,7 @@ describe 'Get Soldiers', ->
         metadata:
           processing: false
           processAt: 1478724780 + 60
+          intervalTime: 10000
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error

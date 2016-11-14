@@ -1,5 +1,6 @@
 async  = require 'async'
 moment = require 'moment'
+debug = require('debug')('migrate:soldiers')
 
 INDEXES = [
   {
@@ -24,9 +25,9 @@ class Soldiers
     @collection.createIndex index, {background:true, name}, callback
 
   createFromInterval: (interval, callback) =>
-    @exists interval, (error, exists) =>
-      return callback error if error?
-      @upsert interval, callback
+    # @exists interval, (error, exists) =>
+    #   return callback error if error?
+    @upsert interval, callback
 
   exists: ({ ownerId, nodeId }, callback) =>
     query = @_getQuery { ownerId, nodeId }
@@ -46,6 +47,7 @@ class Soldiers
       sendTo,
     } = data ? {}
     update = {}
+    remove = {}
     update['data.nodeId'] = nodeId
     update['data.sendTo'] = sendTo ? ownerId
     update['data.transactionId'] = transactionId if transactionId?
@@ -54,26 +56,33 @@ class Soldiers
     update['data.token'] = token if token?
     update['data.nodeId'] = nodeId
     update['metadata.nonce'] = nonce if nonce?
-    update['metadata.intervalTime'] = parseInt(intervalTime) if intervalTime?
-    update['metadata.cronString'] = cronString if cronString?
-    update['metadata.processAt'] = moment().unix() unless fireOnce
-    update['metadata.processNow'] = true unless fireOnce
-    update['metadata.fireOnce'] = fireOnce
+    if fireOnce
+      remove['metadata.intervalTime'] = true
+      remove['metadata.cronString'] = true
+      remove['metadata.processAt'] = true
+      remove['metadata.processNow'] = true
+      remove['metadata.fireOnce'] = true
+    else
+      update['metadata.intervalTime'] = parseInt(intervalTime) if intervalTime?
+      update['metadata.cronString'] = cronString if cronString?
+      update['metadata.processAt'] = moment().unix()
+      update['metadata.processNow'] = true
+      update['metadata.fireOnce'] = false
     update['metadata.ownerUuid'] = ownerId
     update['metadata.intervalUuid'] = id if id?
     update['metadata.nodeId'] = nodeId
     query = @_getQuery({ sendTo, nodeId })
-    console.log 'update query', query
-    @collection.update query, { $set: update }, { upsert: true }, (error, result) =>
+    debug 'update query', query
+    @collection.update query, { $set: update, $unset: remove }, { upsert: true }, (error, result) =>
       return callback error if error?
-      console.log 'updated record', update
-      console.log 'updated result', result
+      debug 'updated record', update
+      debug 'updated result', result
       callback null
 
-  _getQuery: ({ sendTo, nodeId }) =>
+  _getQuery: ({ ownerId, nodeId }) =>
     return {
       'metadata.nodeId'   : nodeId
-      'metadata.ownerUuid': sendTo
+      'metadata.ownerUuid': ownerId
     }
 
 module.exports = Soldiers
