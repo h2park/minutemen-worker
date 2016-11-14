@@ -1,6 +1,7 @@
 async  = require 'async'
 moment = require 'moment'
-debug = require('debug')('migrate:soldiers')
+_      = require 'lodash'
+debug  = require('debug')('migrate:soldiers')
 
 INDEXES = [
   {
@@ -73,7 +74,9 @@ class Soldiers
     update['metadata.nodeId'] = nodeId
     query = @_getQuery({ sendTo, nodeId })
     debug 'update query', query
-    @collection.update query, { $set: update, $unset: remove }, { upsert: true }, (error, result) =>
+    updateCommands = { $set: update }
+    updateCommands['$unset'] = remove unless _.isEmpty(remove)
+    @collection.update query, updateCommands, (error, result) =>
       return callback error if error?
       debug 'updated record', update
       debug 'updated result', result
