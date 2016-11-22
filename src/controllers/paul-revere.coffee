@@ -28,7 +28,6 @@ class PaulRevere
     return # stupid redis promise fix
 
   findAndDeploySoldier: (timestamp, callback) =>
-    timestamp = _.clone timestamp
     @soldiers.get { timestamp }, (error, record) =>
       return callback(error) if error?
       return callback(@_createNotFoundError()) unless record?
@@ -51,13 +50,13 @@ class PaulRevere
     recordId      = record._id
     timeRange     = new TimeRange { timestamp, lastRunAt, processNow, @offsetSeconds, fireOnce }
     timeGenerator = new TimeGenerator { timeRange, intervalTime, cronString }
-    secondsList   = timeGenerator.getCurrentSeconds()
+    secondsList   = timeGenerator.getIntervalsForTimeRange()
     secondsList   = [_.first(secondsList)] if fireOnce && _.size(secondsList) > 0
     @_deploySoldier { secondsList, recordId }, (error) =>
       return callback(error) if error?
-      nextProcessAt = timeGenerator.getNextSecond()
-      timestamp     = timeRange.current()
-      @soldiers.update { recordId, nextProcessAt, processAt, timestamp }, callback
+      nextProcessAt = timeGenerator.getNextProcessAt()
+      lastRunAt     = _.last secondsList
+      @soldiers.update { recordId, nextProcessAt, processAt, lastRunAt }, callback
 
   _deploySoldier: ({ secondsList, recordId }, callback) =>
     #debug 'deploy solider', secondsList, recordId

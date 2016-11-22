@@ -36,7 +36,7 @@ class Soldiers
       debug 'no record found' unless record?
       callback null, record
 
-  update: ({ recordId, nextProcessAt, processAt, timestamp }, callback) =>
+  update: ({ recordId, nextProcessAt, processAt, lastRunAt }, callback) =>
     query  = { _id: new ObjectId(recordId) }
     update = {
       $set: {
@@ -44,7 +44,7 @@ class Soldiers
         'metadata.processAt': nextProcessAt
         'metadata.lastProcessAt': processAt
         'metadata.processNow': false
-        'metadata.lastRunAt': timestamp
+        'metadata.lastRunAt': lastRunAt # CONDITIONAL
       }
     }
     overview 'updating solider', { query, update }
@@ -55,9 +55,8 @@ class Soldiers
     @collection.remove { _id: new ObjectId(recordId) }, callback
 
   _getTimeQuery: ({ timestamp }) =>
-    max = moment.unix(timestamp).add(@offsetSeconds, 'seconds').unix()
     return {
-      $lte: max
+      $lt: (timestamp + @offsetSeconds)
       #$gte: ( timestamp - 1) # it should never process things in the past
     }
 

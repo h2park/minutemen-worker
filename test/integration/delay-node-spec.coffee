@@ -52,7 +52,7 @@ describe 'Delay Node', ->
         @soldier.get done
 
     it 'should create have created only one second', (done) ->
-      @seconds.hasOneSecond {@currentTimestamp,@recordId,intervalTime:30000}, done
+      @seconds.hasOneSecond {@currentTimestamp,@recordId,intervalTime:30000,processNow:true}, done
 
     it 'should have an updated record', ->
       @soldier.checkUpdatedRecord({ @currentTimestamp })

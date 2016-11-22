@@ -12,21 +12,15 @@ class TimeGenerator
     throw new Error 'TimeGenerator: requires either cronString or intervalTime' unless intervalTime? || @cronString?
     @intervalSeconds = @_intervalTimeToSeconds(intervalTime) if intervalTime?
 
-  getCurrentSeconds: =>
+  getIntervalsForTimeRange: =>
     max   = @timeRange.max()
     min   = @timeRange.min()
     start = @timeRange.start()
     return @_getSecondsFromCron({ min, max }) if @cronString?
     return @_getSecondsFromInterval({ min, max, start })
 
-  getNextSecond: =>
-    max   = @timeRange.nextMax()
-    min   = @timeRange.max()
-    start = @timeRange.start()
-    return @_getNextSecondFromCron({ second: max }) if @cronString?
-    second = _.last @_getSecondsFromInterval({ min, max, start })
-    second ?= start
-    return @_getNextSecondFromInterval { second }
+  getNextProcessAt: =>
+    return @timeRange.nextWindow()
 
   _intervalTimeToSeconds: (intervalTime) =>
     return _.round(intervalTime / 1000)
@@ -34,25 +28,25 @@ class TimeGenerator
   _getSecondsFromInterval: ({ start, min, max }) =>
     debug '_getSecondsFromInterval', {@intervalSeconds, min, max, start}
     secondsList = []
-    second = @_getNextSecondFromInterval({ second: start })
+    second = @_getNextProcessAtFromInterval({ second: start })
     while second <= max
       secondsList.push second if second > min
-      second = @_getNextSecondFromInterval { second }
+      second = @_getNextProcessAtFromInterval { second }
     return secondsList
 
-  _getNextSecondFromInterval: ({ second }) =>
+  _getNextProcessAtFromInterval: ({ second }) =>
     return @intervalSeconds + second
 
   _getSecondsFromCron: ({ min, max }) =>
     debug '_getSecondsFromCron', {@cronString, min, max}
     secondsList = []
-    second = @_getNextSecondFromCron { second: min }
+    second = @_getNextProcessAtFromCron { second: min }
     while second <= max
       secondsList.push second
-      second = @_getNextSecondFromCron { second }
+      second = @_getNextProcessAtFromCron { second }
     return secondsList
 
-  _getNextSecondFromCron: ({ second }) =>
+  _getNextProcessAtFromCron: ({ second }) =>
     currentDate = moment.unix(second).toDate()
     parser = cronParser.parseExpression @cronString, { currentDate }
     nextTime = @_getNextTimeFromCronParser(parser)

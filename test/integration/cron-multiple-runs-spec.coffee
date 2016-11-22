@@ -40,7 +40,7 @@ describe 'Multiple Runs (Cron)', ->
       metadata = {
         cronString: '* * * * * *',
         processNow: true,
-        processAt: _.clone(@currentTimestamp)
+        processAt: @currentTimestamp
       }
       @soldier.create metadata, done
 
@@ -51,65 +51,27 @@ describe 'Multiple Runs (Cron)', ->
         @soldier.get done
 
     it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
+      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000,isCron:true, processNow: true }, done
 
     it 'should have an updated record', ->
       @soldier.checkUpdatedRecord({ @currentTimestamp })
 
-    describe 'wait 2 minutes and run again', ->
+    describe 'wait 1 minutes and run again', ->
       beforeEach (done) ->
         @client.flushall done
         return # redis
 
       beforeEach (done) ->
-        @nextTimestamp = @currentTimestamp + 120
-        @sut.findAndDeploySoldier @nextTimestamp, (error) =>
+        @currentTimestamp += 60
+        @sut.findAndDeploySoldier @currentTimestamp, (error) =>
           return done error if error?
           @soldier.get done
 
       it 'should create the correct seconds', (done) ->
-        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
+        @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
 
       it 'should have an updated record', ->
-        @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })
-
-    describe 'wait 1 second and run again', ->
-      beforeEach (done) ->
-        @client.flushall done
-        return # redis
-
-      beforeEach (done) ->
-        @nextTimestamp = @currentTimestamp + 1
-        @sut.findAndDeploySoldier @nextTimestamp, (@error) =>
-          @soldier.get done
-
-      it 'should have a 404 error', ->
-        expect(@error.code).to.equal 404
-
-      it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
-
-      it 'should remain untouched since the last process', ->
-        @soldier.checkSameRecord()
-
-    describe 'wait 30 seconds and run again', ->
-      beforeEach (done) ->
-        @client.flushall done
-        return # redis
-
-      beforeEach (done) ->
-        @nextTimestamp = @currentTimestamp + 30
-        @sut.findAndDeploySoldier @nextTimestamp, (@error) =>
-          @soldier.get done
-
-      it 'should have a 404 error', ->
-        expect(@error.code).to.equal 404
-
-      it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime: 1000,isCron:true }, done
-
-      it 'should remain untouched since the last process', ->
-        @soldier.checkSameRecord()
+        @soldier.checkUpdatedRecord({ @currentTimestamp })
 
   describe 'when cronString is every other second', ->
     beforeEach (done) ->
@@ -120,7 +82,7 @@ describe 'Multiple Runs (Cron)', ->
       metadata = {
         cronString: '*/2 * * * * *',
         processNow: true,
-        processAt: _.clone(@currentTimestamp)
+        processAt: @currentTimestamp
       }
       @soldier.create metadata, done
 
@@ -131,62 +93,24 @@ describe 'Multiple Runs (Cron)', ->
         @soldier.get done
 
     it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 2000,isCron:true }, done
+      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 2000,isCron:true,processNow:true}, done
 
     it 'should have an updated record', ->
       @soldier.checkUpdatedRecord({ @currentTimestamp })
 
-    describe 'wait 2 minutes and run again', ->
+    describe 'wait 1 minutes and run again', ->
       beforeEach (done) ->
         @client.flushall done
         return # redis
 
       beforeEach (done) ->
-        @nextTimestamp = _.clone @currentTimestamp + 120
-        @sut.findAndDeploySoldier @nextTimestamp, (error) =>
+        @currentTimestamp += 60
+        @sut.findAndDeploySoldier @currentTimestamp, (error) =>
           return done error if error?
           @soldier.get done
 
       it 'should create a new set of correct seconds', (done) ->
-        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000,isCron:true }, done
+        @seconds.hasSeconds {@currentTimestamp, @recordId, intervalTime:2000,isCron:true }, done
 
       it 'should have an updated record', ->
-        @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })
-
-    describe 'wait 1 second and run again', ->
-      beforeEach (done) ->
-        @client.flushall done
-        return # redis
-
-      beforeEach (done) ->
-        @nextTimestamp = _.clone @currentTimestamp + 1
-        @sut.findAndDeploySoldier @nextTimestamp, (@error) =>
-          @soldier.get done
-
-      it 'should have a 404 error', ->
-        expect(@error.code).to.equal 404
-
-      it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime:2000,isCron:true }, done
-
-      it 'should remain untouched since the last process', ->
-        @soldier.checkSameRecord()
-
-    describe 'wait 30 seconds and run again', ->
-      beforeEach (done) ->
-        @client.flushall done
-        return # redis
-
-      beforeEach (done) ->
-        @nextTimestamp = _.clone @currentTimestamp + 30
-        @sut.findAndDeploySoldier @nextTimestamp, (@error) =>
-          @soldier.get done
-
-      it 'should have a 404 error', ->
-        expect(@error.code).to.equal 404
-
-      it 'should not create any seconds', (done) ->
-        @seconds.doesNotHaveSeconds {currentTimestamp:@nextTimestamp,@recordId,intervalTime:2000,isCron:true }, done
-
-      it 'should remain untouched since the last process', ->
-        @soldier.checkSameRecord()
+        @soldier.checkUpdatedRecord({@currentTimestamp})

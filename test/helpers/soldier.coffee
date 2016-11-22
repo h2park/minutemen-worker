@@ -29,7 +29,7 @@ class Soldier
     pervProcessAt = moment.unix(@prevRecord.metadata.processAt)
     timeExpect.shouldBeAtLeast 'processAt', processAt, processAt.add(2, 'minute')
     timeExpect.shouldEqual 'lastProcessAt', lastProcessAt, pervProcessAt
-    timeExpect.shouldEqual 'lastRunAt', moment.unix(@record.metadata.lastRunAt), moment.unix(currentTimestamp)
+    # timeExpect.shouldEqual 'lastRunAt', moment.unix(@record.metadata.lastRunAt), moment.unix(currentTimestamp)
     assert.isFalse @record.metadata.processing, "processing should be set to false"
     assert.isFalse @record.metadata.processNow, "processNow should be set to false"
 

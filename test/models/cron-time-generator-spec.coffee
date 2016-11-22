@@ -4,7 +4,7 @@ TimeRange     = require '../../src/models/time-range'
 moment        = require 'moment'
 
 describe 'TimeGenerator (Cron)', ->
-  describe '->getCurrentSeconds', ->
+  describe '->getIntervalsForTimeRange', ->
     describe 'when set every second', ->
       beforeEach ->
         @timeRange = new TimeRange {
@@ -15,8 +15,8 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * * *' }
 
       it 'should have correct list of seconds', ->
-        seconds = _.map _.range(1, 61), (n) => @timeRange.current() + n
-        expect(@sut.getCurrentSeconds()).to.deep.equal seconds
+        seconds = _.map _.range(1, 121), (n) => @timeRange.timestamp + n
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set every 10 seconds', ->
       beforeEach ->
@@ -28,7 +28,8 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/10 * * * * *' }
 
       it 'should have correct list of seconds', ->
-        expect(@sut.getCurrentSeconds()).to.deep.equal [
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [
+          1478033400,
           1478033410,
           1478033420,
           1478033430,
@@ -47,7 +48,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * *' }
 
       it 'should have the correct second in the list', ->
-        expect(@sut.getCurrentSeconds()).to.deep.equal [1478033460]
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033460]
 
     describe 'when set every 10 minute', ->
       beforeEach ->
@@ -60,9 +61,9 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '10 * * * *' }
 
       it 'should have the correct second in the list', ->
-        expect(@sut.getCurrentSeconds()).to.deep.equal [1478034600]
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478034600]
 
-  describe '->getNextSecond', ->
+  describe '->getNextProcessAt', ->
     describe 'when set to 1 second', ->
       beforeEach ->
         @timeRange = new TimeRange {
@@ -73,7 +74,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 1
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 1
 
     describe 'when set to 2 second', ->
       beforeEach ->
@@ -85,7 +86,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/2 * * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 2
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 2
 
     describe 'when set to 30 second', ->
       beforeEach ->
@@ -97,7 +98,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/30 * * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 30
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 30
 
     describe 'when set to 1 minute', ->
       beforeEach ->
@@ -109,7 +110,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 60
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 60
 
     describe 'when set to 10 minute', ->
       beforeEach ->
@@ -121,4 +122,4 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/10 * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.start() + (10 * 60)
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.start() + (10 * 60)

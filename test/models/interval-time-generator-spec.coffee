@@ -4,7 +4,7 @@ TimeRange     = require '../../src/models/time-range'
 moment        = require 'moment'
 
 describe 'TimeGenerator (Interval)', ->
-  describe '->getCurrentSeconds', ->
+  describe '->getIntervalsForTimeRange', ->
     describe 'when set to 1 second', ->
       beforeEach ->
         @timeRange = new TimeRange {
@@ -15,8 +15,8 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1000 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 61), (n) => @timeRange.current() + n
-        expect(@sut.getCurrentSeconds()).to.deep.equal seconds
+        seconds = _.map _.range(1, 61), (n) => @timeRange.timestamp + n
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 1499', ->
       beforeEach ->
@@ -28,8 +28,8 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1499 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 61), (n) => @timeRange.current() + n
-        expect(@sut.getCurrentSeconds()).to.deep.equal seconds
+        seconds = _.map _.range(1, 61), (n) => @timeRange.timestamp + n
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 2000', ->
       beforeEach ->
@@ -42,7 +42,7 @@ describe 'TimeGenerator (Interval)', ->
 
       it 'should have the correct seconds list', ->
         seconds = _.map _.range(1, 31), (n) => 1478033400 + (n * 2)
-        expect(@sut.getCurrentSeconds()).to.deep.equal seconds
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 1500', ->
       beforeEach ->
@@ -54,8 +54,8 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1500 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 31), (n) => @timeRange.current() + (n * 2)
-        expect(@sut.getCurrentSeconds()).to.deep.equal seconds
+        seconds = _.map _.range(1, 31), (n) => @timeRange.timestamp + (n * 2)
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 30 seconds', ->
       beforeEach ->
@@ -67,7 +67,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 30000 }
 
       it 'should have the correct seconds list', ->
-        expect(@sut.getCurrentSeconds()).to.deep.equal [1478033430,1478033460]
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033430,1478033460]
 
     describe 'when set to every 10 minutes', ->
       beforeEach ->
@@ -80,9 +80,9 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: (10 * 60 * 1000) }
 
       it 'should have the correct seconds list', ->
-        expect(@sut.getCurrentSeconds()).to.deep.equal [1478033450]
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033450]
 
-  describe '->getNextSecond', ->
+  describe '->getNextProcessAt', ->
     describe 'when set to 1 second', ->
       beforeEach ->
         @timeRange = new TimeRange {
@@ -93,7 +93,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1000}
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 1
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 1
 
     describe 'when set to 2 second', ->
       beforeEach ->
@@ -105,7 +105,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 2 * 1000, processNow: true }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 2
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 2
 
     describe 'when set to 30 second', ->
       beforeEach ->
@@ -117,7 +117,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 30 * 1000, processNow: true }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.nextMax() + 30
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 30
 
     describe 'when set to 1 minute', ->
       beforeEach ->
@@ -129,7 +129,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 60 * 1000 }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal  @timeRange.nextMax() + 60
+        expect(@sut.getNextProcessAt()).to.equal  @timeRange.max()
 
     describe 'when set to 10 minute', ->
       beforeEach ->
@@ -141,4 +141,4 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 10 * 60 * 1000 }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextSecond()).to.equal @timeRange.start() + (10 * 60)
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.start() + (10 * 60)
