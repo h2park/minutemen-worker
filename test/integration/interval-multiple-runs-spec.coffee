@@ -75,26 +75,35 @@ describe 'Multiple Runs (Interval)', ->
 
   describe 'when intervalTime is every other second', ->
     beforeEach (done) ->
+      @intervalSeconds = 2
       @sut.getTime (error, @currentTimestamp) =>
         @soldier = new Soldier { @database, @currentTimestamp }
         done error
 
     beforeEach (done) ->
       metadata = {
-        intervalTime: 2000,
+        intervalTime: @intervalSeconds * 1000,
         processNow: true,
         processAt: @currentTimestamp
       }
       @soldier.create metadata, done
 
     beforeEach (done) ->
+      @nextTimestamp = @currentTimestamp+120
       @recordId = @soldier.getRecordId()
       @sut.findAndDeploySoldier @currentTimestamp, (error) =>
         return done error if error?
-        @soldier.get done
+        @soldier.get =>
+          @seconds.getSeconds {@currentTimestamp,@recordId,intervalTime: (@intervalSeconds * 1000),processNow:true}, (error, @secondList) =>
+            @firstSecond = _.first @secondList
+            @secondSecond = _.nth @secondList, 1
+            @lastSecond = _.last @secondList
+            done error
 
-    it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds {@currentTimestamp,@recordId,intervalTime:2000,processNow:true}, done
+    it 'should create the correct seconds', ->
+      expect(@firstSecond).to.equal @currentTimestamp
+      expect(@secondSecond - @firstSecond).to.equal @intervalSeconds
+      expect(@lastSecond).to.be.within @nextTimestamp-@intervalSeconds, @nextTimestamp
 
     it 'should have an updated record', ->
       @soldier.checkUpdatedRecord({ @currentTimestamp })
@@ -105,13 +114,23 @@ describe 'Multiple Runs (Interval)', ->
         return # redis
 
       beforeEach (done) ->
+        @currentTimestamp += 60
         @nextTimestamp = @currentTimestamp + 60
-        @sut.findAndDeploySoldier @nextTimestamp, (error) =>
+        @nextNextTimestamp = @nextTimestamp + 60
+        @sut.findAndDeploySoldier @currentTimestamp, (error) =>
           return done error if error?
-          @soldier.get done
+          @soldier.get =>
+            @seconds.getSeconds {@currentTimestamp,@recordId,intervalTime: (@intervalSeconds * 1000)}, (error, @secondList) =>
+              @firstSecond = _.first @secondList
+              @secondSecond = _.nth @secondList, 1
+              @lastSecond = _.last @secondList
+              console.log {@firstSecond}
+              done error
 
-      it 'should create the correct seconds', (done) ->
-        @seconds.hasSeconds { currentTimestamp:@nextTimestamp, @recordId, intervalTime: 2000 }, done
+      it 'should create the correct seconds', ->
+        expect(@firstSecond).to.equal @nextTimestamp
+        expect(@secondSecond - @firstSecond).to.equal @intervalSeconds
+        expect(@lastSecond).to.be.within @nextNextTimestamp-@intervalSeconds, @nextNextTimestamp
 
       it 'should have an updated record', ->
         @soldier.checkUpdatedRecord({ currentTimestamp:@nextTimestamp })

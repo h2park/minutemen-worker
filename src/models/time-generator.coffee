@@ -28,9 +28,9 @@ class TimeGenerator
   _getSecondsFromInterval: ({ start, min, max }) =>
     debug '_getSecondsFromInterval', {@intervalSeconds, min, max, start}
     secondsList = []
-    second = @_getNextProcessAtFromInterval({ second: start })
+    second = start
     while second <= max
-      secondsList.push second if second > min
+      secondsList.push second if second >= min
       second = @_getNextProcessAtFromInterval { second }
     return secondsList
 

@@ -10,19 +10,12 @@ class Seconds
     throw new Error 'Seconds (TestHelper): requires queueName' unless @queueName?
     @sampleSize ?= 60
 
-  hasSeconds: ({ currentTimestamp, recordId, intervalTime, isCron, processNow }, callback) =>
+  getSeconds: ({ currentTimestamp, recordId, intervalTime, isCron, processNow }, callback) =>
     throw new Error 'Seconds.hasSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires recordId' unless recordId?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires intervalTime' unless intervalTime?
     offset = _.round(intervalTime / 1000)
-    @_get { currentTimestamp, recordId, processNow, isCron, offset }, (error, seconds) =>
-      return callback error if error?
-      secondsRange = @_getSecondsRange { currentTimestamp, processNow, isCron, offset }
-      foundSeconds = @_filterSeconds { seconds, exists: true }
-      expectedSeconds = @_getExpectedSeconds { secondsRange, currentTimestamp, isCron, offset }
-      console.log { foundSeconds, expectedSeconds }
-      timeExpect.shouldMatchMembers 'seconds', foundSeconds, expectedSeconds
-      callback()
+    @_get { currentTimestamp, recordId, processNow, isCron, offset }, callback
 
   hasOneSecond: ({ currentTimestamp, recordId, intervalTime,processNow }, callback) =>
     throw new Error 'Seconds.hasOneSecond (TestHelper): requires currentTimestamp' unless currentTimestamp?
@@ -66,12 +59,16 @@ class Seconds
     throw new Error 'Seconds._get (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
     callback = _.once callback
-    secondsRange = @_getSecondsRange({ currentTimestamp, processNow, isCron, offset })
-    @_multiLists { secondsRange }, (error, results) =>
-      return callback error if error?
-      [ error, seconds ] = @_parseMultiResults { secondsRange, results, recordId }
-      return callback error if error?
-      callback null, seconds
+    @client.keys '*', (error, keys) =>
+      secondsRange = _.map keys, (key) =>
+        _.parseInt _.last _.split key, ':'
+      @_multiLists { secondsRange }, (error, results) =>
+        return callback error if error?
+        seconds = _.map results, ([ignore,result]) =>
+          data = JSON.parse _.first result
+          data.timestamp
+        seconds.sort()
+        callback null, seconds
     return # redis fix
 
   _multiLists: ({ secondsRange }, callback) =>
