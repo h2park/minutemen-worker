@@ -44,9 +44,9 @@ class Soldiers
         'metadata.processAt': nextProcessAt
         'metadata.lastProcessAt': processAt
         'metadata.processNow': false
-        'metadata.lastRunAt': lastRunAt # CONDITIONAL
       }
     }
+    update['$set']['metadata.lastRunAt'] = lastRunAt if lastRunAt?
     overview 'updating solider', { query, update }
     @collection.update query, update, callback
 

@@ -31,10 +31,12 @@ describe 'Multiple Runs (Cron)', ->
     @soldier = new Soldier { @database }
     @sut     = new PaulRevere { @database, @client, @queueName, offsetSeconds: 60 }
 
-  describe 'when cronString is once a second', ->
-    beforeEach (done) ->
-      @sut.getTime (error, @currentTimestamp) =>
-        done error
+  describe 'when intervalTime is every second', ->
+    beforeEach ->
+      @intervalSeconds = 1
+      @intervalTime = @intervalSeconds * 1000
+      @currentTimestamp = 1480361300
+      @soldier = new Soldier { @database, @currentTimestamp }
 
     beforeEach (done) ->
       metadata = {
@@ -46,15 +48,38 @@ describe 'Multiple Runs (Cron)', ->
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
+      @nextTimestamp = @currentTimestamp + 120
       @sut.findAndDeploySoldier @currentTimestamp, (error) =>
         return done error if error?
         @soldier.get done
 
-    it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000,isCron:true, processNow: true }, done
+    beforeEach (done) ->
+      @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime,processNow:true}, (error, @secondList) =>
+        done error
 
-    it 'should have an updated record', ->
-      @soldier.checkUpdatedRecord({ @currentTimestamp })
+    it 'should have the 1st second equal to the current timestamp', ->
+      expect(@secondList.first).to.equal @currentTimestamp
+
+    it 'should have the 2nd second equal to one intervalSeconds later', ->
+      expect(@secondList.second - @secondList.first).to.equal @intervalSeconds
+
+    it 'should have the last second equal to one intervalSeconds before the next timestamp', ->
+      expect(@secondList.last).to.equal (@nextTimestamp - @intervalSeconds)
+
+    it 'should have the lastRunAt equal to the last second', ->
+      expect(@soldier.getMetadata().lastRunAt).to.equal @secondList.last
+
+    it 'should have the processAt set to the 0th second of the next timestamp', ->
+      expect(@soldier.getMetadata().processAt).to.equal @currentTimestamp + 60
+
+    it 'should have the lastProcessAt set to the last processAt', ->
+      expect(@soldier.getMetadata().lastProcessAt).to.equal @soldier.getPrevMetadata().processAt
+
+    it 'should set processing to be false', ->
+      expect(@soldier.getMetadata().processing).to.be.false
+
+    it 'should set processNow to be false', ->
+      expect(@soldier.getMetadata().processNow).to.be.false
 
     describe 'wait 1 minutes and run again', ->
       beforeEach (done) ->
@@ -63,20 +88,46 @@ describe 'Multiple Runs (Cron)', ->
 
       beforeEach (done) ->
         @currentTimestamp += 60
+        @nextTimestamp = @currentTimestamp + 60
+        @nextNextTimestamp = @nextTimestamp + 60
         @sut.findAndDeploySoldier @currentTimestamp, (error) =>
           return done error if error?
           @soldier.get done
 
-      it 'should create the correct seconds', (done) ->
-        @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 1000,isCron:true }, done
+      beforeEach (done) ->
+        @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
+          done error
 
-      it 'should have an updated record', ->
-        @soldier.checkUpdatedRecord({ @currentTimestamp })
+      it 'should have the 1st second equal to the next timestamp', ->
+        expect(@secondList.first).to.equal @nextTimestamp
 
-  describe 'when cronString is every other second', ->
-    beforeEach (done) ->
-      @sut.getTime (error, @currentTimestamp) =>
-        done error
+      it 'should have the 2nd second equal to one intervalSeconds later', ->
+        expect(@secondList.second - @secondList.first).to.equal @intervalSeconds
+
+      it 'should have the last second equal to one intervalSeconds before the next next timestamp', ->
+        expect(@secondList.last).to.equal (@nextNextTimestamp - @intervalSeconds)
+
+      it 'should have the lastRunAt equal to the last second', ->
+        expect(@soldier.getMetadata().lastRunAt).to.equal @secondList.last
+
+      it 'should have the processAt set to the 0th second of the next timestamp', ->
+        expect(@soldier.getMetadata().processAt).to.equal @nextTimestamp
+
+      it 'should have the lastProcessAt set to the last processAt', ->
+        expect(@soldier.getMetadata().lastProcessAt).to.equal @soldier.getPrevMetadata().processAt
+
+      it 'should set processing to be false', ->
+        expect(@soldier.getMetadata().processing).to.be.false
+
+      it 'should set processNow to be false', ->
+        expect(@soldier.getMetadata().processNow).to.be.false
+
+  describe 'when intervalTime is every other second', ->
+    beforeEach ->
+      @intervalSeconds = 2
+      @intervalTime = @intervalSeconds * 1000
+      @currentTimestamp = 1480361300
+      @soldier = new Soldier { @database, @currentTimestamp }
 
     beforeEach (done) ->
       metadata = {
@@ -88,15 +139,38 @@ describe 'Multiple Runs (Cron)', ->
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
+      @nextTimestamp = @currentTimestamp + 120
       @sut.findAndDeploySoldier @currentTimestamp, (error) =>
         return done error if error?
         @soldier.get done
 
-    it 'should create the correct seconds', (done) ->
-      @seconds.hasSeconds { @currentTimestamp, @recordId, intervalTime: 2000,isCron:true,processNow:true}, done
+    beforeEach (done) ->
+      @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime,processNow:true}, (error, @secondList) =>
+        done error
 
-    it 'should have an updated record', ->
-      @soldier.checkUpdatedRecord({ @currentTimestamp })
+    it 'should have the 1st second equal to the current timestamp', ->
+      expect(@secondList.first).to.equal @currentTimestamp
+
+    it 'should have the 2nd second equal to one intervalSeconds later', ->
+      expect(@secondList.second - @secondList.first).to.equal @intervalSeconds
+
+    it 'should have the last second equal to one intervalSeconds before the next timestamp', ->
+      expect(@secondList.last).to.equal (@nextTimestamp - @intervalSeconds)
+
+    it 'should have the lastRunAt equal to the last second', ->
+      expect(@soldier.getMetadata().lastRunAt).to.equal @secondList.last
+
+    it 'should have the processAt set to the 0th second of the next timestamp', ->
+      expect(@soldier.getMetadata().processAt).to.equal @currentTimestamp + 60
+
+    it 'should have the lastProcessAt set to the last processAt', ->
+      expect(@soldier.getMetadata().lastProcessAt).to.equal @soldier.getPrevMetadata().processAt
+
+    it 'should set processing to be false', ->
+      expect(@soldier.getMetadata().processing).to.be.false
+
+    it 'should set processNow to be false', ->
+      expect(@soldier.getMetadata().processNow).to.be.false
 
     describe 'wait 1 minutes and run again', ->
       beforeEach (done) ->
@@ -105,12 +179,36 @@ describe 'Multiple Runs (Cron)', ->
 
       beforeEach (done) ->
         @currentTimestamp += 60
+        @nextTimestamp = @currentTimestamp + 60
+        @nextNextTimestamp = @nextTimestamp + 60
         @sut.findAndDeploySoldier @currentTimestamp, (error) =>
           return done error if error?
           @soldier.get done
 
-      it 'should create a new set of correct seconds', (done) ->
-        @seconds.hasSeconds {@currentTimestamp, @recordId, intervalTime:2000,isCron:true }, done
+      beforeEach (done) ->
+        @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
+          done error
 
-      it 'should have an updated record', ->
-        @soldier.checkUpdatedRecord({@currentTimestamp})
+      it 'should have the 1st second equal to the next timestamp', ->
+        expect(@secondList.first).to.equal @nextTimestamp
+
+      it 'should have the 2nd second equal to one intervalSeconds later', ->
+        expect(@secondList.second - @secondList.first).to.equal @intervalSeconds
+
+      it 'should have the last second equal to one intervalSeconds before the next next timestamp', ->
+        expect(@secondList.last).to.equal (@nextNextTimestamp - @intervalSeconds)
+
+      it 'should have the lastRunAt equal to the last second', ->
+        expect(@soldier.getMetadata().lastRunAt).to.equal @secondList.last
+
+      it 'should have the processAt set to the 0th second of the next timestamp', ->
+        expect(@soldier.getMetadata().processAt).to.equal @nextTimestamp
+
+      it 'should have the lastProcessAt set to the last processAt', ->
+        expect(@soldier.getMetadata().lastProcessAt).to.equal @soldier.getPrevMetadata().processAt
+
+      it 'should set processing to be false', ->
+        expect(@soldier.getMetadata().processing).to.be.false
+
+      it 'should set processNow to be false', ->
+        expect(@soldier.getMetadata().processNow).to.be.false

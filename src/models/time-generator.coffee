@@ -16,7 +16,7 @@ class TimeGenerator
     max   = @timeRange.max()
     min   = @timeRange.min()
     start = @timeRange.start()
-    return @_getSecondsFromCron({ min, max }) if @cronString?
+    return @_getSecondsFromCron({ min, max, start }) if @cronString?
     return @_getSecondsFromInterval({ min, max, start })
 
   getNextProcessAt: =>
@@ -29,7 +29,7 @@ class TimeGenerator
     debug '_getSecondsFromInterval', {@intervalSeconds, min, max, start}
     secondsList = []
     second = start
-    while second <= max
+    while second < max
       secondsList.push second if second >= min
       second = @_getNextProcessAtFromInterval { second }
     return secondsList
@@ -37,12 +37,12 @@ class TimeGenerator
   _getNextProcessAtFromInterval: ({ second }) =>
     return @intervalSeconds + second
 
-  _getSecondsFromCron: ({ min, max }) =>
-    debug '_getSecondsFromCron', {@cronString, min, max}
+  _getSecondsFromCron: ({ start, min, max }) =>
+    debug '_getSecondsFromCron', {@cronString, min, max, start}
     secondsList = []
-    second = @_getNextProcessAtFromCron { second: min }
-    while second <= max
-      secondsList.push second
+    second = start
+    while second < max
+      secondsList.push second if second >= min
       second = @_getNextProcessAtFromCron { second }
     return secondsList
 

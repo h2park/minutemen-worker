@@ -31,28 +31,56 @@ describe 'Delay Node', ->
     @soldier = new Soldier { @database }
     @sut     = new PaulRevere { @database, @client, @queueName, offsetSeconds: 60 }
 
-  describe 'when a delay of 30 seconds is set', ->
+  describe 'when intervalTime is every 30 seconds', ->
     beforeEach (done) ->
+      @intervalSeconds = 1
+      @intervalTime = @intervalSeconds * 1000
       @sut.getTime (error, @currentTimestamp) =>
+        @soldier = new Soldier { @database, @currentTimestamp }
         done error
 
     beforeEach (done) ->
       metadata = {
-        intervalTime: 30000,
-        processNow: true,
-        processAt: _.clone(@currentTimestamp)
+        @intervalTime,
+        processNow: false,
         fireOnce: true,
+        processAt: @currentTimestamp
       }
       @soldier.create metadata, done
 
     beforeEach (done) ->
       @recordId = @soldier.getRecordId()
+      @currentTimestamp += 60
+      @nextTimestamp = @currentTimestamp + 60
+      @nextNextTimestamp = @nextTimestamp + 60
       @sut.findAndDeploySoldier @currentTimestamp, (error) =>
         return done error if error?
         @soldier.get done
 
-    it 'should create have created only one second', (done) ->
-      @seconds.hasOneSecond {@currentTimestamp,@recordId,intervalTime:30000,processNow:true}, done
+    beforeEach (done) ->
+      @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
+        done error
 
-    it 'should have an updated record', ->
-      @soldier.checkUpdatedRecord({ @currentTimestamp })
+    it 'should have the 1st second equal to the next timestamp', ->
+      expect(@secondList.first).to.equal @nextTimestamp
+
+    it 'should have not have 2nd second', ->
+      expect(@secondList.second).to.not.exist
+
+    it 'should have the last second equal to the next timestamp', ->
+      expect(@secondList.last).to.equal @nextTimestamp
+
+    it 'should have the lastRunAt equal to the last second', ->
+      expect(@soldier.getMetadata().lastRunAt).to.equal @secondList.last
+
+    it 'should have the processAt set to the 0th second of the next timestamp', ->
+      expect(@soldier.getMetadata().processAt).to.equal @nextTimestamp
+
+    it 'should have the lastProcessAt set to the last processAt', ->
+      expect(@soldier.getMetadata().lastProcessAt).to.equal @soldier.getPrevMetadata().processAt
+
+    it 'should set processing to be false', ->
+      expect(@soldier.getMetadata().processing).to.be.false
+
+    it 'should set processNow to be false', ->
+      expect(@soldier.getMetadata().processNow).to.be.false

@@ -1,7 +1,6 @@
 _          = require 'lodash'
 async      = require 'async'
 moment     = require 'moment'
-timeExpect = require './time-expect'
 debug      = require('debug')('minutemen-worker:test')
 
 class Seconds
@@ -15,30 +14,15 @@ class Seconds
     throw new Error 'Seconds.hasSeconds (TestHelper): requires recordId' unless recordId?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires intervalTime' unless intervalTime?
     offset = _.round(intervalTime / 1000)
-    @_get { currentTimestamp, recordId, processNow, isCron, offset }, callback
-
-  hasOneSecond: ({ currentTimestamp, recordId, intervalTime,processNow }, callback) =>
-    throw new Error 'Seconds.hasOneSecond (TestHelper): requires currentTimestamp' unless currentTimestamp?
-    throw new Error 'Seconds.hasOneSecond (TestHelper): requires recordId' unless recordId?
-    throw new Error 'Seconds.hasOneSecond (TestHelper): requires intervalTime' unless intervalTime?
-    offset = _.round(intervalTime / 1000)
-    @_get { currentTimestamp, recordId,processNow }, (error, seconds) =>
+    @_get { currentTimestamp, recordId, processNow, isCron, offset }, (error, secondList) =>
       return callback error if error?
-      foundSeconds = @_filterSeconds { seconds, exists: true }
-      assert.lengthOf foundSeconds, 1, 'expected seconds to only contain one record'
-      timeExpect.shouldInclude 'seconds', foundSeconds, moment.unix(currentTimestamp).add(offset, 'seconds')
-      callback()
-
-  doesNotHaveSeconds: ({ currentTimestamp, recordId, intervalTime, processNow }, callback) =>
-    throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
-    throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires recordId' unless recordId?
-    throw new Error 'Seconds.doesNotHaveSeconds (TestHelper): requires intervalTime' unless intervalTime?
-    offset = _.round(intervalTime / 1000)
-    @_get { currentTimestamp, recordId,processNow }, (error, seconds) =>
-      return callback error if error?
-      foundSeconds = @_filterSeconds { seconds, exists: true }
-      assert.lengthOf foundSeconds, 0, "expected no seconds to have been created, instead #{JSON.stringify(foundSeconds)} were found."
-      callback()
+      secondList = _.filter secondList, { exists: true }
+      secondList = _.map secondList, 'timestamp'
+      callback null, {
+        first : _.first secondList
+        second: _.nth secondList, 1
+        last  : _.last secondList
+      }
 
   _getSecondsRange: ({ currentTimestamp, processNow, isCron, offset }) =>
     return _.range (currentTimestamp + 1), (currentTimestamp + 60) if processNow
@@ -60,15 +44,11 @@ class Seconds
     throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
     callback = _.once callback
     @client.keys '*', (error, keys) =>
-      secondsRange = _.map keys, (key) =>
-        _.parseInt _.last _.split key, ':'
+      secondsRange = _.map keys, (key) => _.parseInt _.last _.split key, ':'
       @_multiLists { secondsRange }, (error, results) =>
         return callback error if error?
-        seconds = _.map results, ([ignore,result]) =>
-          data = JSON.parse _.first result
-          data.timestamp
-        seconds.sort()
-        callback null, seconds
+        [ error, secondList ] = @_parseMultiResults({ secondsRange, results, recordId })
+        return callback error, secondList
     return # redis fix
 
   _multiLists: ({ secondsRange }, callback) =>
@@ -87,6 +67,7 @@ class Seconds
         return [new Error 'Record ID does not match'] unless data.recordId == recordId
         return [new Error 'Timestamp does not match'] unless _.parseInt(data.timestamp) == timestamp
       seconds.push { timestamp, exists: _.size(result) == 1 }
+    seconds =_.sortBy seconds, 'timestamp'
     return [null, seconds]
 
 module.exports = Seconds
