@@ -1,9 +1,9 @@
 # minutemen-worker
 
-[![Build Status](https://travis-ci.org/https://github.com/octoblu/minutemen-worker.svg?branch=master)](https://travis-ci.org/https://github.com/octoblu/minutemen-worker)
-[![Test Coverage](https://codecov.io/gh/https://github.com/octoblu/minutemen-worker/branch/master/graph/badge.svg)](https://codecov.io/gh/https://github.com/octoblu/minutemen-worker)
-[![Dependency status](http://img.shields.io/david/https://github.com/octoblu/minutemen-worker.svg?style=flat)](https://david-dm.org/https://github.com/octoblu/minutemen-worker)
-[![devDependency Status](http://img.shields.io/david/dev/https://github.com/octoblu/minutemen-worker.svg?style=flat)](https://david-dm.org/https://github.com/octoblu/minutemen-worker#info=devDependencies)
+[![Build Status](https://travis-ci.org/octoblu/minutemen-worker.svg?branch=master)](https://travis-ci.org/octoblu/minutemen-worker)
+[![Test Coverage](https://codecov.io/gh/octoblu/minutemen-worker/branch/master/graph/badge.svg)](https://codecov.io/gh/octoblu/minutemen-worker)
+[![Dependency status](http://img.shields.io/david/octoblu/minutemen-worker.svg?style=flat)](https://david-dm.org/octoblu/minutemen-worker)
+[![devDependency Status](http://img.shields.io/david/dev/octoblu/minutemen-worker.svg?style=flat)](https://david-dm.org/octoblu/minutemen-worker#info=devDependencies)
 [![Slack Status](http://community-slack.octoblu.com/badge.svg)](http://community-slack.octoblu.com)
 
 [![NPM](https://nodei.co/npm/minutemen-worker.svg?style=flat)](https://npmjs.org/package/minutemen-worker)
