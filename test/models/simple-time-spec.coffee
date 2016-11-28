@@ -10,12 +10,16 @@ describe 'Simple Time Example', ->
       sut = new TimeGenerator({ timeRange, intervalTime: 1000 })
       @secondsList = sut.getIntervalsForTimeRange()
 
-      timeRange = new TimeRange { timestamp: sut.getNextProcessAt(), offsetSeconds: 60, lastRunAt: _.last(@secondsList) }
+      timeRange = new TimeRange {
+        timestamp: sut.getNextProcessAt(),
+        offsetSeconds: 60,
+        lastRunAt: _.last(@secondsList)
+      }
       seconds = new TimeGenerator({ timeRange, intervalTime: 1000 }).getIntervalsForTimeRange()
       @secondsList = _.union @secondsList, seconds
 
     it 'should have the correct seconds list', ->
-      expect(@secondsList).to.deep.equal _.range 1, 181
+      expect(@secondsList).to.deep.equal _.range 0, 180
 
   describe 'when every minute', ->
     beforeEach ->
@@ -23,13 +27,18 @@ describe 'Simple Time Example', ->
       sut = new TimeGenerator({ timeRange, intervalTime: 60000 })
       @secondsList = sut.getIntervalsForTimeRange()
       _.times 10, (n) =>
-        timeRange = new TimeRange { timestamp: sut.getNextProcessAt(), offsetSeconds: 60, lastRunAt: _.last(@secondsList) }
+        timeRange = new TimeRange {
+          timestamp: sut.getNextProcessAt(),
+          offsetSeconds: 60,
+          lastRunAt: _.last(@secondsList)
+        }
         sut = new TimeGenerator({ timeRange, intervalTime: 60000 })
         seconds = sut.getIntervalsForTimeRange()
         @secondsList = _.union @secondsList, seconds
 
     it 'should have the correct seconds list', ->
       expect(@secondsList).to.deep.equal [
+        0
         60
         120
         180
@@ -41,5 +50,4 @@ describe 'Simple Time Example', ->
         540
         600
         660
-        720
       ]

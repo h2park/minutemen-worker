@@ -10,12 +10,15 @@ describe 'Simple Cron Time Example', ->
       sut = new TimeGenerator({ timeRange, cronString: '* * * * * *' })
       @secondsList = sut.getIntervalsForTimeRange()
 
-      timeRange = new TimeRange { timestamp: sut.getNextProcessAt(), offsetSeconds: 60, lastRunAt: _.last(@secondsList) }
+      timeRange = new TimeRange {
+        timestamp: sut.getNextProcessAt(),
+        offsetSeconds: 60, lastRunAt: _.last(@secondsList)
+      }
       seconds = new TimeGenerator({ timeRange, cronString: '* * * * * *' }).getIntervalsForTimeRange()
       @secondsList = _.union @secondsList, seconds
 
     it 'should have the correct seconds list', ->
-      expect(@secondsList).to.deep.equal _.range 2, 182
+      expect(@secondsList).to.deep.equal _.range 1, 181
 
   describe 'when every minute', ->
     beforeEach ->
@@ -23,13 +26,18 @@ describe 'Simple Cron Time Example', ->
       sut = new TimeGenerator({ timeRange, cronString: '* * * * *' })
       @secondsList = sut.getIntervalsForTimeRange()
       _.times 10, (n) =>
-        timeRange = new TimeRange { timestamp: sut.getNextProcessAt(), offsetSeconds: 60, lastRunAt: _.last(@secondsList) }
+        timeRange = new TimeRange {
+          timestamp: sut.getNextProcessAt(),
+          offsetSeconds: 60,
+          lastRunAt: _.last(@secondsList)
+        }
         sut = new TimeGenerator({ timeRange, cronString: '* * * * *' })
         seconds = sut.getIntervalsForTimeRange()
         @secondsList = _.union @secondsList, seconds
 
     it 'should have the correct seconds list', ->
       expect(@secondsList).to.deep.equal [
+        1
         60
         120
         180

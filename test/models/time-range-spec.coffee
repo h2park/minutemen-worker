@@ -3,45 +3,54 @@ TimeRange = require '../../src/models/time-range'
 moment    = require 'moment'
 
 describe 'TimeRange', ->
-  describe '->current', ->
-    beforeEach ->
-      @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60 }
-
-    it 'should be set the current time', ->
-      expect(@sut.current()).to.equal 1478033340
-
   describe '->max', ->
-    beforeEach ->
-      @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60 }
+    describe 'when processNow is true', ->
+      beforeEach ->
+        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60, processNow: true }
 
-    it 'should be set to after the next time range', ->
-      expect(@sut.max()).to.equal 1478033340 + 60
+      it 'should be set to the min + 120', ->
+        expect(@sut.max()).to.equal @sut.min() + 120
+
+    describe 'when processNow is false', ->
+      beforeEach ->
+        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60, processNow: false }
+
+      it 'should be set to the min time + 60', ->
+        expect(@sut.max()).to.equal @sut.min() + 60
 
   describe '->min', ->
+    describe 'when processNow is true', ->
+      beforeEach ->
+        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60, processNow: true }
+
+      it 'should be set to the current timestamp', ->
+        expect(@sut.min()).to.equal 1478033340
+
+    describe 'when processNow is false', ->
+      beforeEach ->
+        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60, processNow: false }
+
+      it 'should be set to current timestamp + 60', ->
+        expect(@sut.min()).to.equal 1478033340 + 60
+
+  describe '->start', ->
+    describe 'when lastRunAt is set', ->
+      beforeEach ->
+        @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60, lastRunAt: 1478033300 }
+
+      it 'should be set to the lastRunAt', ->
+        expect(@sut.start()).to.equal 1478033300
+
     describe 'when lastRunAt is not set', ->
       beforeEach ->
         @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60 }
 
-      it 'should be set to the same minute as the currentTime', ->
-        expect(@sut.min()).to.equal 1478033340
+      it 'should be set to the lastRunAt', ->
+        expect(@sut.start()).to.equal 1478033340
 
-    describe 'when lastRunAt is greater than the current time', ->
-      beforeEach ->
-        @sut = new TimeRange { timestamp: 1478033340, lastRunAt: 1478033370, offsetSeconds: 60 }
-
-      it 'should be set to the same minute as lastRunAt', ->
-        expect(@sut.min()).to.equal 1478033370
-
-    describe 'when lastRunAt is less than the current time', ->
-      beforeEach ->
-        @sut = new TimeRange { timestamp: 1478033340, lastRunAt: 1478033300, offsetSeconds: 60 }
-
-      it 'should be set to the same minute as the current time', ->
-        expect(@sut.min()).to.equal 1478033340
-
-  describe '->offset', ->
+  describe '->nextWindow', ->
     beforeEach ->
       @sut = new TimeRange { timestamp: 1478033340, offsetSeconds: 60 }
 
-    it 'should be set to 60 seconds', ->
-      expect(@sut.offset()).to.equal 60
+    it 'should be set to the current timestamp + 60', ->
+      expect(@sut.nextWindow()).to.equal 1478033340 + 60

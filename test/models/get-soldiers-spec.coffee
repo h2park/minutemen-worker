@@ -184,13 +184,13 @@ describe 'Get Soldiers', ->
       @sut.get { timestamp: 1478724780 }, (error, @record) =>
         done error
 
-    it 'should find still the record', ->
-      expect(@record._id.toString()).to.equal @recordId
+    it 'should not find the record', ->
+      expect(@record).to.not.exist
 
     describe 'when the record is checked again', ->
       beforeEach (done) ->
         @collection.findOne { _id: new ObjectId(@recordId) }, (error, @updatedRecord) =>
           done error
 
-      it 'should be set to processing', ->
-        expect(@updatedRecord.metadata.processing).to.be.true
+      it 'should not be set to processing', ->
+        expect(@updatedRecord.metadata.processing).to.be.false

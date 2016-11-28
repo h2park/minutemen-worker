@@ -15,7 +15,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * * *' }
 
       it 'should have correct list of seconds', ->
-        seconds = _.map _.range(1, 121), (n) => @timeRange.timestamp + n
+        seconds = _.map _.range(0, 120), (n) => @timeRange.timestamp + n
         expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set every 10 seconds', ->
@@ -36,6 +36,11 @@ describe 'TimeGenerator (Cron)', ->
           1478033440,
           1478033450,
           1478033460,
+          1478033470,
+          1478033480,
+          1478033490,
+          1478033500,
+          1478033510,
         ]
 
     describe 'when set every minute', ->
@@ -48,7 +53,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * *' }
 
       it 'should have the correct second in the list', ->
-        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033460]
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033400,1478033460]
 
     describe 'when set every 10 minute', ->
       beforeEach ->
@@ -74,7 +79,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 1
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 2 second', ->
       beforeEach ->
@@ -86,7 +91,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/2 * * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 2
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 30 second', ->
       beforeEach ->
@@ -98,7 +103,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/30 * * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 30
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 1 minute', ->
       beforeEach ->
@@ -110,7 +115,7 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '* * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 60
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 10 minute', ->
       beforeEach ->
@@ -122,4 +127,4 @@ describe 'TimeGenerator (Cron)', ->
         @sut = new TimeGenerator { @timeRange, cronString: '*/10 * * * *' }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.start() + (10 * 60)
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()

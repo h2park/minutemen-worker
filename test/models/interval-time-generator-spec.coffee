@@ -15,7 +15,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1000 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 61), (n) => @timeRange.timestamp + n
+        seconds = _.map _.range(0, 120), (n) => @timeRange.timestamp + n
         expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 1499', ->
@@ -28,7 +28,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1499 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 61), (n) => @timeRange.timestamp + n
+        seconds = _.map _.range(0, 120), (n) => @timeRange.timestamp + n
         expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 2000', ->
@@ -41,7 +41,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 2000 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 31), (n) => 1478033400 + (n * 2)
+        seconds = _.map _.range(0, 60), (n) => 1478033400 + (n * 2)
         expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 1500', ->
@@ -54,7 +54,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1500 }
 
       it 'should have the correct seconds list', ->
-        seconds = _.map _.range(1, 31), (n) => @timeRange.timestamp + (n * 2)
+        seconds = _.map _.range(0, 60), (n) => @timeRange.timestamp + (n * 2)
         expect(@sut.getIntervalsForTimeRange()).to.deep.equal seconds
 
     describe 'when set to every 30 seconds', ->
@@ -67,7 +67,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 30000 }
 
       it 'should have the correct seconds list', ->
-        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033430,1478033460]
+        expect(@sut.getIntervalsForTimeRange()).to.deep.equal [1478033400,1478033430,1478033460,1478033490]
 
     describe 'when set to every 10 minutes', ->
       beforeEach ->
@@ -93,7 +93,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 1000}
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 1
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 2 second', ->
       beforeEach ->
@@ -105,7 +105,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 2 * 1000, processNow: true }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 2
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 30 second', ->
       beforeEach ->
@@ -117,7 +117,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 30 * 1000, processNow: true }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextMax() + 30
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
 
     describe 'when set to 1 minute', ->
       beforeEach ->
@@ -129,7 +129,7 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 60 * 1000 }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal  @timeRange.max()
+        expect(@sut.getNextProcessAt()).to.equal  @timeRange.nextWindow()
 
     describe 'when set to 10 minute', ->
       beforeEach ->
@@ -141,4 +141,4 @@ describe 'TimeGenerator (Interval)', ->
         @sut = new TimeGenerator { @timeRange, intervalTime: 10 * 60 * 1000 }
 
       it 'should have the correct next second', ->
-        expect(@sut.getNextProcessAt()).to.equal @timeRange.start() + (10 * 60)
+        expect(@sut.getNextProcessAt()).to.equal @timeRange.nextWindow()
