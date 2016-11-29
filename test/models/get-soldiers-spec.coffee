@@ -14,10 +14,10 @@ describe 'Get Soldiers', ->
 
   before 'insert records that should not be processed', (done) ->
     records = [
-      { metadata: { processing: false, processAt: 1478724782 + 100 }}
-      { metadata: { processing: false, processAt: 1478724782 + 300 }}
-      { metadata: { processing: true, processAt: 1478724782 + 10 }}
-      { metadata: { processing: true, processAt: 1478724782 + 10 }}
+      { metadata: { processing: false, processAt: 1478724782 + 100, credentialsOnly: false }}
+      { metadata: { processing: false, processAt: 1478724782 + 300, credentialsOnly: false }}
+      { metadata: { processing: true, processAt: 1478724782 + 10, credentialsOnly: false }}
+      { metadata: { processing: true, processAt: 1478724782 + 10, credentialsOnly: false }}
     ]
     @collection.insert records, done
 
@@ -28,7 +28,9 @@ describe 'Get Soldiers', ->
           metadata:
             processing: false
             processAt: 1478724782 + 8
+            processNow: true
             intervalTime: 1000
+            credentialsOnly: false
         @collection.insert record, (error, record) =>
           @recordId = record?._id.toString()
           done error
@@ -54,6 +56,7 @@ describe 'Get Soldiers', ->
           metadata:
             processing: false
             intervalTime: 1000
+            credentialsOnly: false
         @collection.insert record, (error, record) =>
           @recordId = record?._id.toString()
           done error
@@ -72,6 +75,7 @@ describe 'Get Soldiers', ->
             processing: true
             processAt: 1478724782 + 8
             cronString: '* * * * *'
+            credentialsOnly: false
         @collection.insert record, (error, record) =>
           @recordId = record?._id.toString()
           done error
@@ -98,6 +102,7 @@ describe 'Get Soldiers', ->
           processing: false
           processAt: 1478724782 - 1
           cronString: '* * * * *'
+          credentialsOnly: false
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error
@@ -124,6 +129,7 @@ describe 'Get Soldiers', ->
           processing: false
           processAt: 1478724782 - 80
           intervalTime: 1
+          credentialsOnly: false
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error
@@ -150,6 +156,7 @@ describe 'Get Soldiers', ->
           processing: false
           processAt: 1478724780 + 61
           interalTime: 1000
+          credentialsOnly: false
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error
@@ -176,6 +183,7 @@ describe 'Get Soldiers', ->
           processing: false
           processAt: 1478724780 + 60
           intervalTime: 10000
+          credentialsOnly: false
       @collection.insert record, (error, record) =>
         @recordId = record?._id.toString()
         done error

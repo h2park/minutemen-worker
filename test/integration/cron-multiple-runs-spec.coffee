@@ -112,35 +112,66 @@ describe 'Multiple Runs (Cron)', ->
       it 'should have the same metadata', ->
         expect(@soldier.getMetadata()).to.deep.equal @soldier.getPrevMetadata()
 
-      describe 'wait 60 seconds and run again', ->
-        beforeEach (done) ->
-          @client.flushall done
-          return # redis
+    describe 'wait 1 seconds and run again', ->
+      beforeEach (done) ->
+        @client.flushall done
+        return # redis
 
-        beforeEach (done) ->
-          @nextTimestamp = @currentTimestamp + 60
-          @nextNextTimestamp = @nextTimestamp + 60
-          @sut.findAndDeploySoldier @currentTimestamp, (@error) =>
-            @soldier.get done
+      beforeEach (done) ->
+        @currentTimestamp += 1
+        @nextTimestamp = @currentTimestamp + 60
+        @nextNextTimestamp = @nextTimestamp + 60
+        @sut.findAndDeploySoldier @currentTimestamp, (@error) =>
+          @soldier.get done
 
-        beforeEach (done) ->
-          @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
-            done error
+      beforeEach (done) ->
+        @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
+          done error
 
-        it 'should have a 404 error', ->
-          expect(@error.code).to.equal 404
+      it 'should have a 404 error', ->
+        expect(@error.code).to.equal 404
 
-        it 'should not have a 1st second', ->
-          expect(@secondList.first).to.not.exist
+      it 'should not have a 1st second', ->
+        expect(@secondList.first).to.not.exist
 
-        it 'should not have a 2nd second', ->
-          expect(@secondList.second).to.not.exist
+      it 'should not have a 2nd second', ->
+        expect(@secondList.second).to.not.exist
 
-        it 'should not have a last second', ->
-          expect(@secondList.last).to.not.exist
+      it 'should not have a last second', ->
+        expect(@secondList.last).to.not.exist
 
-        it 'should have the same metadata', ->
-          expect(@soldier.getMetadata()).to.deep.equal @soldier.getPrevMetadata()
+      it 'should have the same metadata', ->
+        expect(@soldier.getMetadata()).to.deep.equal @soldier.getPrevMetadata()
+
+    describe 'wait 60 seconds and run again', ->
+      beforeEach (done) ->
+        @client.flushall done
+        return # redis
+
+      beforeEach (done) ->
+        @nextTimestamp = @currentTimestamp + 60
+        @nextNextTimestamp = @nextTimestamp + 60
+        @sut.findAndDeploySoldier @currentTimestamp, (@error) =>
+          @soldier.get done
+
+      beforeEach (done) ->
+        @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
+          done error
+
+      it 'should have a 404 error', ->
+        expect(@error.code).to.equal 404
+
+      it 'should not have a 1st second', ->
+        expect(@secondList.first).to.not.exist
+
+      it 'should not have a 2nd second', ->
+        expect(@secondList.second).to.not.exist
+
+      it 'should not have a last second', ->
+        expect(@secondList.last).to.not.exist
+
+      it 'should have the same metadata', ->
+        expect(@soldier.getMetadata()).to.deep.equal @soldier.getPrevMetadata()
 
     describe 'wait 2 minutes and run again', ->
       beforeEach (done) ->
@@ -182,6 +213,36 @@ describe 'Multiple Runs (Cron)', ->
 
       it 'should set processNow to be false', ->
         expect(@soldier.getMetadata().processNow).to.be.false
+
+      describe 'wait 0 seconds and run again', ->
+        beforeEach (done) ->
+          @client.flushall done
+          return # redis
+
+        beforeEach (done) ->
+          @nextTimestamp = @currentTimestamp + 60
+          @nextNextTimestamp = @nextTimestamp + 60
+          @sut.findAndDeploySoldier @currentTimestamp, (@error) =>
+            @soldier.get done
+
+        beforeEach (done) ->
+          @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
+            done error
+
+        it 'should have a 404 error', ->
+          expect(@error.code).to.equal 404
+
+        it 'should not have a 1st second', ->
+          expect(@secondList.first).to.not.exist
+
+        it 'should not have a 2nd second', ->
+          expect(@secondList.second).to.not.exist
+
+        it 'should not have a last second', ->
+          expect(@secondList.last).to.not.exist
+
+        it 'should have the same metadata', ->
+          expect(@soldier.getMetadata()).to.deep.equal @soldier.getPrevMetadata()
 
   describe 'when intervalTime is every other second', ->
     beforeEach ->

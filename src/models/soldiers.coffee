@@ -17,7 +17,17 @@ class Soldiers
     query = {
       $and: [
           { 'metadata.processing': { $ne: true } }
-          { 'metadata.processAt': @_getTimeQuery({ timestamp }) }
+          { 'metadata.credentialsOnly': { $ne: true } }
+          {
+            $or: [
+              {
+                'metadata.processAt': {
+                  $lt: timestamp
+                }
+              }
+              { 'metadata.processNow': true }
+            ]
+          }
           {
             $or: [
               {'metadata.intervalTime': {$exists: true}}
@@ -53,11 +63,5 @@ class Soldiers
   remove: ({ recordId }, callback) =>
     overview 'removing solider', { recordId }
     @collection.remove { _id: new ObjectId(recordId) }, callback
-
-  _getTimeQuery: ({ timestamp }) =>
-    return {
-      $lt: (timestamp + @offsetSeconds)
-      #$gte: ( timestamp - 1) # it should never process things in the past
-    }
 
 module.exports = Soldiers
