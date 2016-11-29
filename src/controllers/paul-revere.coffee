@@ -49,7 +49,7 @@ class PaulRevere
     } = metadata
     recordId      = record._id
     timeRange     = new TimeRange { timestamp, lastRunAt, processNow, @offsetSeconds, fireOnce }
-    timeGenerator = new TimeGenerator { timeRange, intervalTime, cronString }
+    timeGenerator = new TimeGenerator { timeRange, intervalTime, cronString, fireOnce }
     secondsList   = timeGenerator.getIntervalsForTimeRange()
     secondsList   = [_.first(secondsList)] if fireOnce && _.size(secondsList) > 0
     @_deploySoldier { secondsList, recordId }, (error) =>

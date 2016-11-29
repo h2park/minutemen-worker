@@ -5,7 +5,7 @@ TimeRange  = require './time-range'
 debug      = require('debug')('minutemen-worker:time-generator')
 
 class TimeGenerator
-  constructor: ({ @timeRange, @cronString, intervalTime }) ->
+  constructor: ({ @timeRange, @cronString, intervalTime, @fireOnce }) ->
     throw new Error 'TimeGenerator: requires timeRange' unless @timeRange?
     throw new Error 'TimeGenerator: requires intervalTime to be an integer' if intervalTime? and !_.isInteger(intervalTime)
     throw new Error 'TimeGenerator: requires cronString to be a string' if @cronString? and !_.isString(@cronString)
@@ -30,7 +30,10 @@ class TimeGenerator
     secondsList = []
     second = start
     while second < max
-      secondsList.push second if second >= min
+      if @fireOnce
+        secondsList.push second if second > min
+      else
+        secondsList.push second if second >= min
       second = @_getNextProcessAtFromInterval { second }
     return secondsList
 
@@ -40,10 +43,12 @@ class TimeGenerator
   _getSecondsFromCron: ({ start, min, max }) =>
     debug '_getSecondsFromCron', {@cronString, min, max, start}
     secondsList = []
-    second = start if @timeRange.processNow
-    second ?= @_getNextProcessAtFromCron { second: start }
+    second = start
     while second < max
-      secondsList.push second if second >= min
+      if @fireOnce
+        secondsList.push second if second > min
+      else
+        secondsList.push second if second >= min
       second = @_getNextProcessAtFromCron { second }
     return secondsList
 
