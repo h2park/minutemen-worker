@@ -42,6 +42,8 @@ class Soldiers
     debug 'get.query', JSON.stringify(query)
     @collection.findAndModify { query, update: { $set: update }, sort }, (error, record) =>
       return callback error if error?
+      # Safe findAndModify - see @jade for details
+      return callback null if _.get record, 'metadata.processing'
       overview 'found record', record.metadata if record?
       debug 'no record found' unless record?
       callback null, record
