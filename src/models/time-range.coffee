@@ -12,6 +12,7 @@ class TimeRange
     debug 'timestamp', @timestamp
     debug 'max', @max()
     debug 'min', @min()
+    debug 'nextWindow', @nextWindow()
     debug 'processNow', @processNow
     debug 'lastRunAt', @lastRunAt
 
@@ -21,6 +22,7 @@ class TimeRange
 
   nextWindow: =>
     return @timestamp + @offsetSeconds
+    return @timestamp
 
   min: =>
     return @timestamp if @processNow

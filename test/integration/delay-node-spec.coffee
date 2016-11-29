@@ -61,20 +61,20 @@ describe 'Delay Node', ->
       @seconds.getSeconds {@currentTimestamp,@recordId,@intervalTime}, (error, @secondList) =>
         done error
 
-    it 'should have the 1st second equal to the next timestamp', ->
+    it 'should have the 1st second equal to the current timestamp', ->
       expect(@secondList.first).to.equal @nextTimestamp
 
-    it 'should have not have 2nd second', ->
+    it 'should have no 2nd second', ->
       expect(@secondList.second).to.not.exist
 
-    it 'should have the last second equal to the next timestamp', ->
-      expect(@secondList.last).to.equal @nextTimestamp
+    it 'should have the last second equal to first one', ->
+      expect(@secondList.last).to.equal @secondList.last
 
     it 'should have the lastRunAt equal to the last second', ->
       expect(@soldier.getMetadata().lastRunAt).to.equal @secondList.last
 
-    it 'should have the processAt set to the 0th second of the next timestamp', ->
-      expect(@soldier.getMetadata().processAt).to.equal @nextTimestamp
+    it 'should have the processAt set to the next window', ->
+      expect(@soldier.getMetadata().processAt).to.equal @currentTimestamp + 60
 
     it 'should have the lastProcessAt set to the last processAt', ->
       expect(@soldier.getMetadata().lastProcessAt).to.equal @soldier.getPrevMetadata().processAt

@@ -9,6 +9,7 @@ describe 'Simple Time Example', ->
       timeRange = new TimeRange { timestamp: 0, offsetSeconds: 60, processNow: true }
       sut = new TimeGenerator({ timeRange, intervalTime: 1000 })
       @secondsList = sut.getIntervalsForTimeRange()
+      console.log 'start', _.size(@secondsList)
 
       timeRange = new TimeRange {
         timestamp: sut.getNextProcessAt(),
@@ -16,7 +17,9 @@ describe 'Simple Time Example', ->
         lastRunAt: _.last(@secondsList)
       }
       seconds = new TimeGenerator({ timeRange, intervalTime: 1000 }).getIntervalsForTimeRange()
+      console.log 'pre', _.size(seconds)
       @secondsList = _.union @secondsList, seconds
+      console.log 'post', _.size(@secondsList)
 
     it 'should have the correct seconds list', ->
       expect(@secondsList).to.deep.equal _.range 0, 180

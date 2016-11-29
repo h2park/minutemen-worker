@@ -40,7 +40,8 @@ class TimeGenerator
   _getSecondsFromCron: ({ start, min, max }) =>
     debug '_getSecondsFromCron', {@cronString, min, max, start}
     secondsList = []
-    second = start
+    second = start if @timeRange.processNow
+    second ?= @_getNextProcessAtFromCron { second: start }
     while second < max
       secondsList.push second if second >= min
       second = @_getNextProcessAtFromCron { second }

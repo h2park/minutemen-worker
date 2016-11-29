@@ -9,37 +9,30 @@ class Seconds
     throw new Error 'Seconds (TestHelper): requires queueName' unless @queueName?
     @sampleSize ?= 60
 
-  getSeconds: ({ currentTimestamp, recordId, intervalTime, isCron, processNow }, callback) =>
+  getSeconds: ({ currentTimestamp, recordId, intervalTime, processNow }, callback) =>
     throw new Error 'Seconds.hasSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires recordId' unless recordId?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires intervalTime' unless intervalTime?
-    offset = _.round(intervalTime / 1000)
-    @_get { currentTimestamp, recordId, processNow, isCron, offset }, (error, secondList) =>
+    intervalSeconds = _.round(intervalTime / 1000)
+    @_get { currentTimestamp, recordId, processNow, intervalSeconds }, (error, seconds) =>
       return callback error if error?
-      secondList = _.filter secondList, { exists: true }
-      secondList = _.map secondList, 'timestamp'
+      secondList = @_filterSeconds { seconds, exists: true }
       callback null, {
         first : _.first secondList
         second: _.nth secondList, 1
         last  : _.last secondList
       }
 
-  _getSecondsRange: ({ currentTimestamp, processNow, isCron, offset }) =>
+  _getSecondsRange: ({ currentTimestamp, processNow, intervalSeconds }) =>
     return _.range (currentTimestamp + 1), (currentTimestamp + 60) if processNow
     start = currentTimestamp + 60
-    if offset > 1 and isCron
-      start += start % 2
-    start += 1 unless isCron
-    return _.range (start + offset), start + 60
+    start += 1
+    return _.range (start + intervalSeconds), start + 60
 
   _filterSeconds: ({ seconds, exists }) =>
     return _.map _.filter(seconds, { exists }), 'timestamp'
 
-  _getExpectedSeconds: ({ currentTimestamp, secondsRange, isCron, offset }) =>
-    return _.filter secondsRange, (second) =>
-      return second % offset == 0
-
-  _get: ({ currentTimestamp, recordId, processNow, isCron, offset }, callback) =>
+  _get: ({ currentTimestamp, recordId, processNow, isCron, intervalSeconds }, callback) =>
     throw new Error 'Seconds._get (TestHelper): requires currentTimestamp' unless currentTimestamp?
     throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
     callback = _.once callback
