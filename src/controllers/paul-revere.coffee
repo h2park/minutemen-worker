@@ -38,7 +38,7 @@ class PaulRevere
     return callback new Error 'Missing record._id in _processSoldier' unless record._id?
     return callback new Error 'Missing timestamp in _processSoldier' unless timestamp?
     debug 'process solider', { record }
-    { metadata, data } = record
+    { metadata, data, uuid } = record
     {
       intervalTime,
       cronString,
@@ -52,21 +52,21 @@ class PaulRevere
     timeGenerator = new TimeGenerator { timeRange, intervalTime, cronString, fireOnce }
     secondsList   = timeGenerator.getIntervalsForTimeRange()
     secondsList   = [_.first(secondsList)] if fireOnce && _.size(secondsList) > 0
-    @_deploySoldier { secondsList, recordId }, (error) =>
+    @_deploySoldier { secondsList, uuid, recordId }, (error) =>
       return callback(error) if error?
       nextProcessAt = timeGenerator.getNextProcessAt()
       lastRunAt     = _.last secondsList
-      @soldiers.update { recordId, nextProcessAt, processAt, lastRunAt }, callback
+      @soldiers.update { uuid, recordId, nextProcessAt, processAt, lastRunAt }, callback
 
-  _deploySoldier: ({ secondsList, recordId }, callback) =>
+  _deploySoldier: ({ secondsList, recordId, uuid }, callback) =>
     #debug 'deploy solider', secondsList, recordId
     overview "inserting #{_.size(secondsList)} seconds for #{recordId}"
     overview "first: #{_.first(secondsList)} last: #{_.last(secondsList)}" if _.size(secondsList) > 0
-    async.eachSeries secondsList, async.apply(@_pushSecond, recordId), callback
+    async.eachSeries secondsList, async.apply(@_pushSecond, { recordId, uuid }), callback
 
-  _pushSecond: (recordId, timestamp, callback) =>
+  _pushSecond: ({ recordId, uuid }, timestamp, callback) =>
     #debug 'lpushing', { timestamp, recordId }
-    data = {recordId,timestamp}
+    data = { uuid, recordId, timestamp }
     @client.lpush "#{@queueName}:#{timestamp}", JSON.stringify(data), callback
     return # redis fix
 

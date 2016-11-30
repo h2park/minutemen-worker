@@ -9,12 +9,11 @@ class Seconds
     throw new Error 'Seconds (TestHelper): requires queueName' unless @queueName?
     @sampleSize ?= 60
 
-  getSeconds: ({ currentTimestamp, recordId, intervalTime, processNow }, callback) =>
+  getSeconds: ({ currentTimestamp, intervalTime, processNow }, callback) =>
     throw new Error 'Seconds.hasSeconds (TestHelper): requires currentTimestamp' unless currentTimestamp?
-    throw new Error 'Seconds.hasSeconds (TestHelper): requires recordId' unless recordId?
     throw new Error 'Seconds.hasSeconds (TestHelper): requires intervalTime' unless intervalTime?
     intervalSeconds = _.round(intervalTime / 1000)
-    @_get { currentTimestamp, recordId, processNow, intervalSeconds }, (error, seconds) =>
+    @_get { currentTimestamp, processNow, intervalSeconds }, (error, seconds) =>
       return callback error if error?
       secondList = @_filterSeconds { seconds, exists: true }
       callback null, {
@@ -32,15 +31,14 @@ class Seconds
   _filterSeconds: ({ seconds, exists }) =>
     return _.map _.filter(seconds, { exists }), 'timestamp'
 
-  _get: ({ currentTimestamp, recordId, processNow, isCron, intervalSeconds }, callback) =>
+  _get: ({ currentTimestamp, processNow, isCron, intervalSeconds }, callback) =>
     throw new Error 'Seconds._get (TestHelper): requires currentTimestamp' unless currentTimestamp?
-    throw new Error 'Seconds._get (TestHelper): requires recordId' unless recordId?
     callback = _.once callback
     @client.keys '*', (error, keys) =>
       secondsRange = _.map keys, (key) => _.parseInt _.last _.split key, ':'
       @_multiLists { secondsRange }, (error, results) =>
         return callback error if error?
-        [ error, secondList ] = @_parseMultiResults({ secondsRange, results, recordId })
+        [ error, secondList ] = @_parseMultiResults({ secondsRange, results })
         return callback error, secondList
     return # redis fix
 
@@ -50,14 +48,14 @@ class Seconds
       multi.lrange "test-worker:#{@queueName}:#{timestamp}", 0, -1
     multi.exec callback
 
-  _parseMultiResults: ({ secondsRange, results, recordId }) =>
+  _parseMultiResults: ({ secondsRange, results }) =>
     seconds = []
     for [ignore, result], index in results
       timestamp = secondsRange[index]
       return [new Error('too many items in the second queue')] if _.size(result) > 1
       if _.size(result) > 0
         data = JSON.parse _.first(result)
-        return [new Error 'Record ID does not match'] unless data.recordId == recordId
+        return [new Error 'Record does not include a recordId'] unless data.recordId?
         return [new Error 'Timestamp does not match'] unless _.parseInt(data.timestamp) == timestamp
       seconds.push { timestamp, exists: _.size(result) == 1 }
     seconds =_.sortBy seconds, 'timestamp'

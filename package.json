@@ -1,6 +1,6 @@
 {
   "name": "minutemen-worker",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "minutemen-worker",
   "keywords": [
     "worker"
@@ -37,7 +37,7 @@
     "moment": "^2.15.2",
     "mongojs": "^2.4.0",
     "sigterm-handler": "^2.0.0",
-    "uuid": "^2.0.3"
+    "uuid": "^3.0.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",

@@ -48,8 +48,9 @@ class Soldiers
       debug 'no record found' unless record?
       callback null, record
 
-  update: ({ recordId, nextProcessAt, processAt, lastRunAt }, callback) =>
-    query  = { _id: new ObjectId(recordId) }
+  update: ({ uuid, recordId, nextProcessAt, processAt, lastRunAt }, callback) =>
+    query  = { uuid } if uuid?
+    query  ?= { _id: new ObjectId(recordId) }
     update = {
       $set: {
         'metadata.processing': false
@@ -61,9 +62,5 @@ class Soldiers
     update['$set']['metadata.lastRunAt'] = lastRunAt if lastRunAt?
     overview 'updating solider', { query, update }
     @collection.update query, update, callback
-
-  remove: ({ recordId }, callback) =>
-    overview 'removing solider', { recordId }
-    @collection.remove { _id: new ObjectId(recordId) }, callback
 
 module.exports = Soldiers

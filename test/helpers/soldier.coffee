@@ -1,5 +1,6 @@
 _            = require 'lodash'
 moment       = require 'moment'
+uuid         = require 'uuid'
 { ObjectId } = require 'mongojs'
 
 class Soldier
@@ -15,7 +16,7 @@ class Soldier
       sendTo: "send-to-#{_.random()}"
       nodeId: "node-id-#{_.random()}"
       transactionId: "transaction-id-#{_.random()}"
-    record = { metadata, data }
+    record = { metadata, data, uuid: uuid.v1() }
     @collection.insert record, (error, record) =>
       return callback error if error?
       @recordId = record._id
@@ -26,6 +27,9 @@ class Soldier
 
   getRecordId: =>
     return @recordId.toString()
+
+  getUUID: =>
+    return @record.uuid
 
   getMetadata: =>
     return @record.metadata
