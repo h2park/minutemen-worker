@@ -93,6 +93,40 @@ describe 'Update Soldiers', ->
       it 'should have processNow: false', ->
         expect(@record.metadata.processNow).to.be.false
 
+    describe 'when using the uuid and recordId', ->
+      beforeEach (done) ->
+        options = {
+          uuid: 'some-uuid',
+          recordId: 'some-crazy-id-that-will-not-work'
+          nextProcessAt: 300,
+          processAt: 200,
+          timestamp: 100,
+          lastRunAt: 120
+        }
+        @sut.update options, done
+
+      beforeEach (done) ->
+        @collection.findOne { uuid: 'some-uuid' }, (error, @record) =>
+          done error
+
+      it 'should find the record', ->
+        expect(@record).to.exist
+
+      it 'should have processing: false', ->
+        expect(@record.metadata.processing).to.be.false
+
+      it 'should have processAt: 300', ->
+        expect(@record.metadata.processAt).to.equal 300
+
+      it 'should have lastProcessAt: 200', ->
+        expect(@record.metadata.lastProcessAt).to.equal 200
+
+      it 'should the lastRunAt of 120', ->
+        expect(@record.metadata.lastRunAt).to.equal 120
+
+      it 'should have processNow: false', ->
+        expect(@record.metadata.processNow).to.be.false
+
     describe 'when using a ObjectId for the id', ->
       beforeEach (done) ->
         options = {

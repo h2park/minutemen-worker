@@ -16,26 +16,25 @@ class Soldiers
     debug 'finding soldier', { timestamp }
     query = {
       $and: [
-          { 'metadata.processing': { $ne: true } }
-          { 'metadata.credentialsOnly': { $ne: true } }
-          {
-            $or: [
-              {
-                'metadata.processAt': {
-                  $lt: timestamp
-                }
+        { 'metadata.processing': { $ne: true } }
+        { 'metadata.credentialsOnly': { $ne: true } }
+        {
+          $or: [
+            {
+              'metadata.processAt': {
+                $lt: timestamp
               }
-              { 'metadata.processNow': true }
-            ]
-          }
-          {
-            $or: [
-              {'metadata.intervalTime': {$exists: true}}
-              {'metadata.cronString': {$exists: true}}
-            ]
-          }
+            }
+            { 'metadata.processNow': true }
+          ]
+        }
+        {
+          $or: [
+            { 'metadata.intervalTime': $exists: true }
+            { 'metadata.cronString': $exists: true }
+          ]
+        }
       ]
-
     }
     update = { 'metadata.processing': true }
     sort = { 'metadata.processAt': -1 }
@@ -49,18 +48,20 @@ class Soldiers
       callback null, record
 
   update: ({ uuid, recordId, nextProcessAt, processAt, lastRunAt }, callback) =>
-    query  = { uuid } if uuid?
-    query  ?= { _id: new ObjectId(recordId) }
-    update = {
-      $set: {
+    query  = @_getQuery({ uuid, recordId })
+    query['metadata.credentialsOnly'] = { $ne: true }
+    update =
+      $set:
         'metadata.processing': false
         'metadata.processAt': nextProcessAt
         'metadata.lastProcessAt': processAt
         'metadata.processNow': false
-      }
-    }
     update['$set']['metadata.lastRunAt'] = lastRunAt if lastRunAt?
     overview 'updating solider', { query, update }
     @collection.update query, update, callback
+
+  _getQuery: ({ uuid, recordId }) =>
+    return { uuid } if uuid?
+    return { _id: new ObjectId(recordId) }
 
 module.exports = Soldiers
