@@ -67,7 +67,9 @@ class PaulRevere
   _pushSecond: ({ recordId, uuid }, timestamp, callback) =>
     #debug 'lpushing', { timestamp, recordId }
     data = { uuid, recordId, timestamp }
-    @client.lpush "#{@queueName}:#{timestamp}", JSON.stringify(data), callback
+    @client.lpush "#{@queueName}:#{timestamp}", JSON.stringify(data), (error) =>
+      return callback error if error?
+      @client.expire "#{@queueName}:#{timestamp}", @offsetSeconds+120, callback
     return # redis fix
 
   _createNotFoundError: =>
