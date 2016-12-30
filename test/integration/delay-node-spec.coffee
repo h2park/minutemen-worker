@@ -8,6 +8,8 @@ Seconds    = require '../helpers/seconds'
 PaulRevere = require '../../src/controllers/paul-revere'
 
 describe 'Delay Node', ->
+  @timeout 6000
+
   before (done) ->
     @queueName = "seconds-#{uuid.v1()}"
     client = new Redis 'localhost', dropBufferSupport: true
