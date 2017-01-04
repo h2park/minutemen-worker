@@ -26,18 +26,20 @@ describe 'Multiple Runs (Interval)', ->
         done()
     return # redis fix
 
-  beforeEach ->
+  before ->
     @seconds = new Seconds { @client, @queueName }
     @soldier = new Soldier { @database }
     @sut     = new PaulRevere { @database, @client, @queueName, offsetSeconds: 60 }
 
+  before (done) ->
+    @sut.getTime (error, @currentTimestamp) =>
+      @soldier = new Soldier { @database, @currentTimestamp }
+      done error
+
   describe 'when intervalTime is every second', ->
-    beforeEach (done) ->
+    before ->
       @intervalSeconds = 1
       @intervalTime = @intervalSeconds * 1000
-      @sut.getTime (error, @currentTimestamp) =>
-        @soldier = new Soldier { @database, @currentTimestamp }
-        done error
 
     beforeEach (done) ->
       metadata = {
@@ -185,12 +187,9 @@ describe 'Multiple Runs (Interval)', ->
         expect(@soldier.getMetadata().processNow).to.be.false
 
   describe 'when intervalTime is every other second', ->
-    beforeEach (done) ->
+    before ->
       @intervalSeconds = 2
       @intervalTime = @intervalSeconds * 1000
-      @sut.getTime (error, @currentTimestamp) =>
-        @soldier = new Soldier { @database, @currentTimestamp }
-        done error
 
     beforeEach (done) ->
       metadata = {
@@ -338,12 +337,9 @@ describe 'Multiple Runs (Interval)', ->
         expect(@soldier.getMetadata().processNow).to.be.false
 
   describe 'when intervalTime is every minute', ->
-    beforeEach (done) ->
+    before ->
       @intervalSeconds = 60
       @intervalTime = @intervalSeconds * 1000
-      @sut.getTime (error, @currentTimestamp) =>
-        @soldier = new Soldier { @database, @currentTimestamp }
-        done error
 
     beforeEach (done) ->
       metadata = {
