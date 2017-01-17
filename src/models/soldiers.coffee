@@ -16,8 +16,18 @@ class Soldiers
     debug 'finding soldier', { timestamp }
     query = {
       $and: [
-        { 'metadata.processing': { $ne: true } }
-        { 'metadata.credentialsOnly': { $ne: true } }
+        {
+          $or: [
+            { 'metadata.processing': false }
+            { 'metadata.processing': { $exists: false } }
+          ]
+        }
+        {
+          $or: [
+            { 'metadata.credentialsOnly': false }
+            { 'metadata.credentialsOnly': { $exists: false } }
+          ]
+        }
         {
           $or: [
             {
