@@ -21,12 +21,14 @@ OPTIONS = [
     type: 'string'
     env: 'REDIS_NAMESPACE'
     help: 'Redis namespace for redis-ns'
+    default: 'minutemen'
   },
   {
     names: ['queue-name', 'q']
     type: 'string'
     env: 'QUEUE_NAME'
     help: 'Name of Redis work queue'
+    default: 'secondsmen'
   },
   {
     names: ['mongodb-uri']
